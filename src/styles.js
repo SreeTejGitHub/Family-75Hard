@@ -8,7 +8,7 @@ const styles = {
     color: "white",
     padding: "20px"
   },
-  card: { width: "100%", maxWidth: "420px" },
+  card: { width: "100%", maxWidth: "420px", position: "relative" },
   title: { fontSize: "28px", textAlign: "center", marginBottom: "10px" },
   subtitle: { textAlign: "center", marginBottom: "15px", color: "#9ca3af" },
   headerRow: { display: "flex", justifyContent: "space-between", marginBottom: "10px" },
@@ -76,6 +76,7 @@ const styles = {
     borderRadius: "8px",
     marginTop: "10px"
   }
+  
 }
 
 const styleSheet = document.styleSheets[0]
