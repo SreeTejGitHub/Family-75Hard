@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react"
 import AppUI from "./AppUI"
+import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth"
+import { auth, provider } from "./firebase"
 
 const create75HardTemplate = () => ({
   id: "75hard",
@@ -22,44 +24,61 @@ const create75HardTemplate = () => ({
 })
 
 export default function App() {
-  const [user, setUserState] = useState(localStorage.getItem("activeUser"))
+  const [user, setUser] = useState(null)
   const [challenges, setChallenges] = useState([])
   const [activeChallengeId, setActiveChallengeId] = useState(null)
   const [tasks, setTasks] = useState([])
 
-  const setUser = (name) => {
-    if (!name) {
-      localStorage.removeItem("activeUser")
-      setUserState(null)
-    } else {
-      localStorage.setItem("activeUser", name)
-      setUserState(name)
-    }
-  }
+  // 🔥 Firebase Auth Listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser)
+    })
+    return () => unsubscribe()
+  }, [])
 
+  // 🔥 Load user challenges
   useEffect(() => {
     if (!user) return
 
     const saved = JSON.parse(
-      localStorage.getItem(`challenges-${user}`)
+      localStorage.getItem(`challenges-${user.uid}`)
     )
 
     if (!saved || saved.length === 0) {
       const defaultChallenge = create75HardTemplate()
       setChallenges([defaultChallenge])
       localStorage.setItem(
-        `challenges-${user}`,
+        `challenges-${user.uid}`,
         JSON.stringify([defaultChallenge])
       )
     } else {
       setChallenges(saved)
     }
+
+    setActiveChallengeId(null)
   }, [user])
 
+  // 🔥 Save changes
   useEffect(() => {
     if (!user) return
-    localStorage.setItem(`challenges-${user}`, JSON.stringify(challenges))
+    localStorage.setItem(
+      `challenges-${user.uid}`,
+      JSON.stringify(challenges)
+    )
   }, [challenges, user])
+
+  const loginWithGoogle = async () => {
+    try {
+      await signInWithPopup(auth, provider)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const logout = async () => {
+    await signOut(auth)
+  }
 
   const activeChallenge = challenges.find(c => c.id === activeChallengeId)
   const progress = activeChallenge?.progress || {}
@@ -76,36 +95,6 @@ export default function App() {
     }
   }, [activeChallengeId])
 
-  const createChallenge = () => {
-    const name = prompt("Challenge name?")
-    const duration = Number(prompt("How many days?"))
-
-    if (!name || !duration) return
-
-    const tasksInput = prompt(
-      "Enter tasks separated by commas"
-    )
-
-    if (!tasksInput) return
-
-    const tasks = tasksInput.split(",").map(t => t.trim())
-
-    const newChallenge = {
-      id: Date.now().toString(),
-      name,
-      duration,
-      tasks,
-      progress: {
-        day: 1,
-        completedDays: [],
-        perfectDays: [],
-        longestStreak: 0,
-        photos: {}
-      }
-    }
-
-    setChallenges(prev => [...prev, newChallenge])
-  }
   const calculateStreak = (days) => {
     let current = 0
     let longest = 0
@@ -127,10 +116,9 @@ export default function App() {
   const completeDay = () => {
     if (!activeChallenge) return
 
-    const isPerfectDay = tasks.every(Boolean)
-
+    const isPerfect = tasks.every(Boolean)
     const updatedCompleted = [...completedDays, day]
-    const updatedPerfect = isPerfectDay ? [...perfectDays, day] : []
+    const updatedPerfect = isPerfect ? [...perfectDays, day] : []
 
     const streakData = calculateStreak(updatedPerfect)
 
@@ -155,6 +143,7 @@ export default function App() {
 
   const reset = () => {
     if (!activeChallenge) return
+
     const updatedProgress = {
       day: 1,
       completedDays: [],
@@ -172,6 +161,31 @@ export default function App() {
     )
   }
 
+  const createChallenge = () => {
+    const name = prompt("Challenge name?")
+    const duration = Number(prompt("How many days?"))
+    if (!name || !duration) return
+
+    const tasksInput = prompt("Enter tasks separated by commas")
+    if (!tasksInput) return
+
+    const newChallenge = {
+      id: Date.now().toString(),
+      name,
+      duration,
+      tasks: tasksInput.split(",").map(t => t.trim()),
+      progress: {
+        day: 1,
+        completedDays: [],
+        perfectDays: [],
+        longestStreak: 0,
+        photos: {}
+      }
+    }
+
+    setChallenges(prev => [...prev, newChallenge])
+  }
+
   const completionPercent = activeChallenge
     ? Math.round((completedDays.length / activeChallenge.duration) * 100)
     : 0
@@ -181,14 +195,14 @@ export default function App() {
   return (
     <AppUI
       user={user}
-      setUser={setUser}
+      loginWithGoogle={loginWithGoogle}
+      logout={logout}
       challenges={challenges}
       activeChallenge={activeChallenge}
       activeChallengeId={activeChallengeId}
       setActiveChallengeId={setActiveChallengeId}
       day={day}
       completedDays={completedDays}
-      perfectDays={perfectDays}
       longestStreak={longestStreak}
       completionPercent={completionPercent}
       currentStreak={currentStreak}
@@ -197,7 +211,6 @@ export default function App() {
       completeDay={completeDay}
       reset={reset}
       photos={photos}
-      handlePhotoUpload={() => { }}
       createChallenge={createChallenge}
     />
   )
