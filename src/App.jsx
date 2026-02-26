@@ -1,68 +1,120 @@
 import { useState, useEffect } from "react"
-import confetti from "canvas-confetti"
+import AppUI from "./AppUI"
 
-const TASKS = [
-  "Workout 1 (45 min)",
-  "Workout 2 (Outdoor)",
-  "1 Gallon Water",
-  "Read 10 Pages",
-  "Progress Picture"
-]
+const create75HardTemplate = () => ({
+  id: "75hard",
+  name: "75 Hard",
+  duration: 75,
+  tasks: [
+    "Workout 1",
+    "Workout 2",
+    "1 Gallon Water",
+    "Read 10 Pages",
+    "Progress Picture"
+  ],
+  progress: {
+    day: 1,
+    completedDays: [],
+    perfectDays: [],
+    longestStreak: 0,
+    photos: {}
+  }
+})
 
 export default function App() {
-  const [day, setDay] = useState(1)
-  const [tasks, setTasks] = useState(Array(5).fill(false))
-  const [completedDays, setCompletedDays] = useState([])
-  const [longestStreak, setLongestStreak] = useState(0)
-  const [badge, setBadge] = useState("")
-  const [view, setView] = useState("tracker")
-  const [photos, setPhotos] = useState({})
+  const [user, setUserState] = useState(localStorage.getItem("activeUser"))
+  const [challenges, setChallenges] = useState([])
+  const [activeChallengeId, setActiveChallengeId] = useState(null)
+  const [tasks, setTasks] = useState([])
 
-  useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("75hard"))
-    if (saved) {
-      setDay(saved.day)
-      setTasks(saved.tasks)
-      setCompletedDays(saved.completedDays || [])
-      setLongestStreak(saved.longestStreak || 0)
-      setPhotos(saved.photos || {})
+  const setUser = (name) => {
+    if (!name) {
+      localStorage.removeItem("activeUser")
+      setUserState(null)
+    } else {
+      localStorage.setItem("activeUser", name)
+      setUserState(name)
     }
-  }, [])
+  }
 
   useEffect(() => {
-    localStorage.setItem(
-      "75hard",
-      JSON.stringify({
-        day,
-        tasks,
-        completedDays,
-        longestStreak,
-        photos
-      })
+    if (!user) return
+
+    const saved = JSON.parse(
+      localStorage.getItem(`challenges-${user}`)
     )
-  }, [day, tasks, completedDays, longestStreak, photos])
 
-  const completionPercent = Math.round(
-    (completedDays.length / 75) * 100
-  )
+    if (!saved || saved.length === 0) {
+      const defaultChallenge = create75HardTemplate()
+      setChallenges([defaultChallenge])
+      localStorage.setItem(
+        `challenges-${user}`,
+        JSON.stringify([defaultChallenge])
+      )
+    } else {
+      setChallenges(saved)
+    }
+  }, [user])
 
-  const consistencyScore = Math.round(
-    (completedDays.length / day) * 100 || 0
-  )
+  useEffect(() => {
+    if (!user) return
+    localStorage.setItem(`challenges-${user}`, JSON.stringify(challenges))
+  }, [challenges, user])
+
+  const activeChallenge = challenges.find(c => c.id === activeChallengeId)
+  const progress = activeChallenge?.progress || {}
+
+  const day = progress.day || 1
+  const completedDays = progress.completedDays || []
+  const perfectDays = progress.perfectDays || []
+  const longestStreak = progress.longestStreak || 0
+  const photos = progress.photos || {}
+
+  useEffect(() => {
+    if (activeChallenge) {
+      setTasks(Array(activeChallenge.tasks.length).fill(false))
+    }
+  }, [activeChallengeId])
+
+  const createChallenge = () => {
+    const name = prompt("Challenge name?")
+    const duration = Number(prompt("How many days?"))
+
+    if (!name || !duration) return
+
+    const tasksInput = prompt(
+      "Enter tasks separated by commas"
+    )
+
+    if (!tasksInput) return
+
+    const tasks = tasksInput.split(",").map(t => t.trim())
+
+    const newChallenge = {
+      id: Date.now().toString(),
+      name,
+      duration,
+      tasks,
+      progress: {
+        day: 1,
+        completedDays: [],
+        perfectDays: [],
+        longestStreak: 0,
+        photos: {}
+      }
+    }
+
+    setChallenges(prev => [...prev, newChallenge])
+  }
   const calculateStreak = (days) => {
     let current = 0
     let longest = 0
     let sorted = [...days].sort((a, b) => a - b)
-
     for (let i = 0; i < sorted.length; i++) {
-      if (i === 0 || sorted[i] === sorted[i - 1] + 1) {
-        current++
-      } else {
-        current = 1
-      }
+      if (i === 0 || sorted[i] === sorted[i - 1] + 1) current++
+      else current = 1
       longest = Math.max(longest, current)
     }
-
     return { current, longest }
   }
 
@@ -72,437 +124,81 @@ export default function App() {
     setTasks(updated)
   }
 
-  const fireConfetti = (power = "normal") => {
-    if (power === "mega") {
-      confetti({
-        particleCount: 500,
-        spread: 180,
-        startVelocity: 60,
-        origin: { y: 0.6 }
-      })
-    } else if (power === "big") {
-      confetti({
-        particleCount: 250,
-        spread: 120,
-        origin: { y: 0.6 }
-      })
-    } else {
-      confetti({
-        particleCount: 120,
-        spread: 80,
-        origin: { y: 0.6 }
-      })
-    }
-  }
-
-  const handlePhotoUpload = (event) => {
-    const file = event.target.files[0]
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setPhotos(prev => ({
-        ...prev,
-        [day]: reader.result
-      }))
-    }
-    reader.readAsDataURL(file)
-  }
   const completeDay = () => {
-    // Ensure all tasks are completed
-    if (!tasks.every(Boolean)) {
-      alert("Complete all tasks first.")
-      return
+    if (!activeChallenge) return
+
+    const isPerfectDay = tasks.every(Boolean)
+
+    const updatedCompleted = [...completedDays, day]
+    const updatedPerfect = isPerfectDay ? [...perfectDays, day] : []
+
+    const streakData = calculateStreak(updatedPerfect)
+
+    const updatedProgress = {
+      day: day + 1,
+      completedDays: updatedCompleted,
+      perfectDays: updatedPerfect,
+      longestStreak: streakData.longest,
+      photos
     }
 
-    // Prevent duplicate completion
-    if (!completedDays.includes(day)) {
-      const updatedDays = [...completedDays, day]
-      setCompletedDays(updatedDays)
+    setChallenges(prev =>
+      prev.map(c =>
+        c.id === activeChallengeId
+          ? { ...c, progress: updatedProgress }
+          : c
+      )
+    )
 
-      // Recalculate streak
-      const streakData = calculateStreak(updatedDays)
-      setLongestStreak(streakData.longest)
-
-      // Default daily celebration
-      setBadge("🎉 DAY COMPLETE")
-      fireConfetti("normal")
-
-      // Weekly milestone
-      if (updatedDays.length % 7 === 0) {
-        setBadge("🔥 7 DAY STREAK")
-        setTimeout(() => fireConfetti("big"), 300)
-      }
-
-      // Major milestones
-      if ([30, 50].includes(updatedDays.length)) {
-        setBadge(`🏆 ${updatedDays.length} DAYS STRONG`)
-        setTimeout(() => fireConfetti("mega"), 500)
-      }
-
-      // Final completion
-      if (updatedDays.length === 75) {
-        setBadge("🚀 75 HARD COMPLETE")
-        setTimeout(() => fireConfetti("mega"), 600)
-      }
-
-      // Auto-hide badge after 2.5 seconds
-      setTimeout(() => {
-        setBadge("")
-      }, 2500)
-    }
-
-    // Move to next day or finish
-    if (day === 75) {
-      alert("🎉 75 Hard Completed!")
-    } else {
-      setDay(day + 1)
-      setTasks(Array(5).fill(false))
-    }
+    setTasks(Array(activeChallenge.tasks.length).fill(false))
   }
 
   const reset = () => {
-    if (confirm("Reset entire challenge?")) {
-      setDay(1)
-      setTasks(Array(5).fill(false))
-      setCompletedDays([])
-      setLongestStreak(0)
+    if (!activeChallenge) return
+    const updatedProgress = {
+      day: 1,
+      completedDays: [],
+      perfectDays: [],
+      longestStreak: 0,
+      photos: {}
     }
+
+    setChallenges(prev =>
+      prev.map(c =>
+        c.id === activeChallengeId
+          ? { ...c, progress: updatedProgress }
+          : c
+      )
+    )
   }
 
-  const progress = Math.round((completedDays.length / 75) * 100)
-  const currentStreak = calculateStreak(completedDays).current
-  // useEffect(() => {
-  //   fireConfetti()
-  // }, [])
+  const completionPercent = activeChallenge
+    ? Math.round((completedDays.length / activeChallenge.duration) * 100)
+    : 0
+
+  const currentStreak = calculateStreak(perfectDays).current
+
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-
-        <h1 style={styles.title}>75 Hard</h1>
-        <p style={styles.subtitle}>Day {day} of 75</p>
-
-        {/* Toggle Buttons */}
-        <div style={styles.toggleRow}>
-          <button
-            style={view === "tracker" ? styles.activeTab : styles.tab}
-            onClick={() => setView("tracker")}
-          >
-            Tracker
-          </button>
-          <button
-            style={view === "stats" ? styles.activeTab : styles.tab}
-            onClick={() => setView("stats")}
-          >
-            Stats
-          </button>
-        </div>
-
-        {/* ===== TRACKER VIEW ===== */}
-        {view === "tracker" && (
-          <>
-            {/* Progress Bar */}
-            <div style={styles.progressBar}>
-              <div
-                style={{
-                  ...styles.progressFill,
-                  width: `${progress}%`
-                }}
-              />
-            </div>
-
-            {/* Streak Section */}
-            <div style={styles.streakBox}>
-              <div>
-                🔥 Current Streak: <strong>{currentStreak}</strong>
-              </div>
-              <div>
-                🏆 Longest Streak: <strong>{longestStreak}</strong>
-              </div>
-            </div>
-
-            {/* 75-Day Grid */}
-            <div style={styles.grid}>
-              {Array.from({ length: 75 }, (_, i) => {
-                const dayNumber = i + 1
-                const isCompleted = completedDays.includes(dayNumber)
-                const isCurrent = dayNumber === day
-
-                return (
-                  <div
-                    key={i}
-                    style={{
-                      ...styles.gridItem,
-                      backgroundColor: isCompleted
-                        ? "#22c55e"
-                        : isCurrent
-                          ? "#3b82f6"
-                          : "#1f2937"
-                    }}
-                  />
-                )
-              })}
-            </div>
-
-            {/* Tasks */}
-            {TASKS.map((task, i) => (
-              <div
-                key={i}
-                onClick={() => toggleTask(i)}
-                style={{
-                  ...styles.task,
-                  backgroundColor: tasks[i] ? "#16a34a" : "#1f2937",
-                  textDecoration: tasks[i] ? "line-through" : "none"
-                }}
-              >
-                {task}
-              </div>
-            ))}
-            <div style={{ marginTop: "15px" }}>
-              <label style={styles.photoLabel}>
-                📸 Upload Progress Photo
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={handlePhotoUpload}
-                  style={{ display: "none" }}
-                />
-              </label>
-
-              {photos[day] && (
-                <img
-                  src={photos[day]}
-                  alt="Progress"
-                  style={styles.previewImage}
-                />
-              )}
-            </div>
-            <button style={styles.primaryBtn} onClick={completeDay}>
-              Complete Day
-            </button>
-
-            <button style={styles.resetBtn} onClick={reset}>
-              Reset Challenge
-            </button>
-          </>
-        )}
-
-        {/* ===== STATS VIEW ===== */}
-        {view === "stats" && (
-          <div style={styles.statsContainer}>
-            <div style={styles.statCard}>
-              📊 Completion
-              <div style={styles.statValue}>{completionPercent}%</div>
-            </div>
-
-            <div style={styles.statCard}>
-              🔥 Current Streak
-              <div style={styles.statValue}>{currentStreak}</div>
-            </div>
-
-            <div style={styles.statCard}>
-              🏆 Longest Streak
-              <div style={styles.statValue}>{longestStreak}</div>
-            </div>
-
-            <div style={styles.statCard}>
-              📅 Days Completed
-              <div style={styles.statValue}>{completedDays.length}/75</div>
-            </div>
-
-            <div style={styles.statCard}>
-              📈 Consistency
-              <div style={styles.statValue}>{consistencyScore}%</div>
-            </div>
-            <div style={{ marginTop: "20px" }}>
-              <h3 style={{ marginBottom: "10px" }}>📸 Progress Photos</h3>
-              <div style={styles.photoGrid}>
-                {Object.keys(photos).map(d => (
-                  <img
-                    key={d}
-                    src={photos[d]}
-                    alt={`Day ${d}`}
-                    style={styles.photoThumbnail}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-      </div>
-    </div>
+    <AppUI
+      user={user}
+      setUser={setUser}
+      challenges={challenges}
+      activeChallenge={activeChallenge}
+      activeChallengeId={activeChallengeId}
+      setActiveChallengeId={setActiveChallengeId}
+      day={day}
+      completedDays={completedDays}
+      perfectDays={perfectDays}
+      longestStreak={longestStreak}
+      completionPercent={completionPercent}
+      currentStreak={currentStreak}
+      tasks={tasks}
+      toggleTask={toggleTask}
+      completeDay={completeDay}
+      reset={reset}
+      photos={photos}
+      handlePhotoUpload={() => { }}
+      createChallenge={createChallenge}
+    />
   )
-}
-
-const styles = {
-  photoGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(3, 1fr)",
-    gap: "6px"
-  },
-  photoThumbnail: {
-    width: "100%",
-    borderRadius: "6px"
-  },
-  photoLabel: {
-    display: "block",
-    padding: "10px",
-    backgroundColor: "#1f2937",
-    borderRadius: "8px",
-    textAlign: "center",
-    cursor: "pointer",
-    marginBottom: "10px"
-  },
-  previewImage: {
-    width: "100%",
-    borderRadius: "8px",
-    marginTop: "10px"
-  },
-  toggleRow: {
-    display: "flex",
-    justifyContent: "center",
-    marginBottom: "15px",
-    gap: "10px"
-  },
-  tab: {
-    padding: "6px 12px",
-    background: "#1f2937",
-    color: "white",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer"
-  },
-  activeTab: {
-    padding: "6px 12px",
-    background: "#22c55e",
-    color: "black",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontWeight: "bold"
-  },
-  statsContainer: {
-    display: "grid",
-    gap: "12px"
-  },
-  statCard: {
-    backgroundColor: "#111827",
-    padding: "15px",
-    borderRadius: "12px",
-    textAlign: "center",
-    fontSize: "14px",
-    color: "#9ca3af"
-  },
-  statValue: {
-    fontSize: "24px",
-    fontWeight: "bold",
-    color: "#22c55e",
-    marginTop: "5px"
-  },
-  badgeOverlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    pointerEvents: "none",
-    zIndex: 999
-  },
-  badge: {
-    backgroundColor: "#111827",
-    border: "3px solid #22c55e",
-    color: "#22c55e",
-    padding: "30px 40px",
-    borderRadius: "20px",
-    fontSize: "22px",
-    fontWeight: "bold",
-    textAlign: "center",
-    boxShadow: "0 0 25px #22c55e",
-    animation: "badgePop 0.6s ease, badgeFade 2.5s ease forwards"
-  },
-  container: {
-    minHeight: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "black",
-    color: "white",
-    padding: "20px"
-  },
-  card: {
-    width: "100%",
-    maxWidth: "420px"
-  },
-  title: {
-    fontSize: "32px",
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: "10px"
-  },
-  subtitle: {
-    textAlign: "center",
-    marginBottom: "15px",
-    color: "#9ca3af"
-  },
-  progressBar: {
-    width: "100%",
-    height: "8px",
-    backgroundColor: "#1f2937",
-    borderRadius: "5px",
-    marginBottom: "15px"
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: "#22c55e",
-    borderRadius: "5px",
-    transition: "width 0.3s ease"
-  },
-  streakBox: {
-    marginBottom: "15px",
-    fontSize: "14px",
-    display: "flex",
-    justifyContent: "space-between",
-    color: "#9ca3af"
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(15, 1fr)",
-    gap: "4px",
-    marginBottom: "20px"
-  },
-  gridItem: {
-    width: "100%",
-    paddingTop: "100%",
-    borderRadius: "3px"
-  },
-  task: {
-    padding: "12px",
-    borderRadius: "8px",
-    marginBottom: "10px",
-    cursor: "pointer"
-  },
-  primaryBtn: {
-    width: "100%",
-    padding: "10px",
-    marginTop: "15px",
-    backgroundColor: "white",
-    color: "black",
-    borderRadius: "6px",
-    border: "none",
-    cursor: "pointer",
-    fontWeight: "bold"
-  },
-  resetBtn: {
-    width: "100%",
-    marginTop: "10px",
-    background: "none",
-    border: "none",
-    color: "#f87171",
-    cursor: "pointer"
-  }
 }
