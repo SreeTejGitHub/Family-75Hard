@@ -2,12 +2,12 @@ import { initializeApp } from "firebase/app"
 import { getAuth, GoogleAuthProvider } from "firebase/auth"
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDoYNNYbihgnoTrOHtkkT76E0d2J4fPBpQ",
-  authDomain: "mychallengetracker.firebaseapp.com",
-  projectId: "mychallengetracker",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
   storageBucket: "mychallengetracker.firebasestorage.app",
   messagingSenderId: "1089008890157",
-  appId: "1:1089008890157:web:646a1b5f46b3690d5123a4"
 };
 
 
