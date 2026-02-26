@@ -78,4 +78,18 @@ const styles = {
   }
 }
 
+const styleSheet = document.styleSheets[0]
+
+styleSheet.insertRule(`
+@keyframes fadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+`, styleSheet.cssRules.length)
 export default styles
