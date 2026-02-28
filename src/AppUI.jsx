@@ -48,12 +48,14 @@ export default function AppUI({
                     padding: "60px 40px"
                 }}>
 
-                    <h1 style={{
-                        fontSize: "42px",
-                        marginBottom: "20px"
-                    }}>
-                        My Challenge Tracker
-                    </h1>
+                    <img
+                        src="/logo.png"
+                        alt="My Challenge Tracker"
+                        style={{
+                            width: "300px",
+                            marginBottom: "0px"
+                        }}
+                    />
 
                     <p style={{
                         opacity: 0.6,
@@ -87,6 +89,15 @@ export default function AppUI({
 
     const Header = () => (
         <div style={styles.headerRow}>
+            <img
+                src="/logo.png"
+                alt="logo"
+                style={{
+                    width: "100px",
+                    height: "50px",
+                    borderRadius: "6px"
+                }}
+            />
             <span>{user.displayName}</span>
             <div ref={menuRef} style={{ position: "relative" }}>
                 <button onClick={() => setMenuOpen(!menuOpen)}>☰</button>
