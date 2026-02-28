@@ -16,22 +16,20 @@ import {
   setDoc,
   onSnapshot,
   updateDoc,
-  serverTimestamp,
   arrayUnion
 } from "firebase/firestore"
 
 import { auth, provider, db } from "./firebase"
 
 export default function App() {
+
   const [user, setUser] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
 
   const [challenges, setChallenges] = useState([])
   const [dataLoading, setDataLoading] = useState(true)
 
-  const [activeChallengeId, setActiveChallengeId] = useState(
-    localStorage.getItem("activeChallengeId")
-  )
+  const [activeChallengeId, setActiveChallengeId] = useState(null)
 
   const [tasks, setTasks] = useState([])
   const [toast, setToast] = useState(null)
@@ -39,12 +37,11 @@ export default function App() {
   /* ---------------- AUTH ---------------- */
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsub = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser)
       setAuthLoading(false)
     })
-
-    return unsubscribe
+    return unsub
   }, [])
 
   /* ---------------- FIRESTORE ---------------- */
@@ -58,49 +55,24 @@ export default function App() {
 
     setDataLoading(true)
 
-    const ref = collection(db, "users", user.uid, "challenges")
+    const refCol = collection(db, "users", user.uid, "challenges")
 
-    const unsubscribe = onSnapshot(
-      ref,
-      (snapshot) => {
-        const data = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data()
-        }))
+    const unsub = onSnapshot(refCol, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
+      setChallenges(data)
+      setDataLoading(false)
+    })
 
-        setChallenges(data)
-        setDataLoading(false)
-      },
-      (error) => {
-        console.error("Firestore error:", error)
-        setDataLoading(false)
-      }
-    )
-
-    return unsubscribe
+    return unsub
   }, [user])
-  /* ---------------- AUTO SELECT FIRST CHALLENGE ---------------- */
 
-  useEffect(() => {
-    if (!activeChallengeId && challenges.length > 0) {
-      const firstId = challenges[0].id
-      setActiveChallengeId(firstId)
-      localStorage.setItem("activeChallengeId", firstId)
-    }
-  }, [challenges])
-
-  /* ---------------- PERSIST ACTIVE CHALLENGE ---------------- */
-
-  useEffect(() => {
-    if (activeChallengeId) {
-      localStorage.setItem("activeChallengeId", activeChallengeId)
-    }
-  }, [activeChallengeId])
-
-  /* ---------------- DERIVED DATA ---------------- */
+  /* ---------------- DERIVED ---------------- */
 
   const activeChallenge = useMemo(
-    () => challenges.find((c) => c.id === activeChallengeId),
+    () => challenges.find(c => c.id === activeChallengeId),
     [challenges, activeChallengeId]
   )
 
@@ -142,6 +114,7 @@ export default function App() {
 
   const logout = async () => {
     await signOut(auth)
+    setActiveChallengeId(null)
   }
 
   const createChallenge = async () => {
@@ -156,7 +129,7 @@ export default function App() {
     const challenge = {
       name,
       duration,
-      tasks: tasksInput.split(",").map((t) => t.trim()),
+      tasks: tasksInput.split(",").map(t => t.trim()),
       progress: {
         day: 1,
         completedDays: [],
@@ -188,13 +161,11 @@ export default function App() {
         : perfectDays
 
     const streakData = calculateStreak(updatedPerfect)
-
     const isLastDay = day === activeChallenge.duration
 
     if (isLastDay) {
-
       const historyEntry = {
-        completedAt: new Date(),  // ✅ Use client timestamp instead
+        completedAt: new Date(),
         longestStreak: streakData.longest,
         perfectDaysCount: updatedPerfect.length
       }
@@ -215,102 +186,61 @@ export default function App() {
         }
       )
 
-      setToast({
-        type: "success",
-        message: "🏆 Challenge Completed! Stats Saved."
-      })
+      setToast({ type: "success", message: "🏆 Challenge Completed!" })
     } else {
-
-      const updatedProgress = {
-        day: day + 1,
-        completedDays: updatedCompleted,
-        perfectDays: updatedPerfect,
-        longestStreak: streakData.longest,
-        photos
-      }
-
-      await updateDoc(
-        doc(db, "users", user.uid, "challenges", activeChallenge.id),
-        { progress: updatedProgress }
-      )
-
-      setToast({
-        type: "success",
-        message: "✅ Day Completed!"
-      })
-    }
-
-    setTimeout(() => setToast(null), 2500)
-
-    setTasks(Array(activeChallenge.tasks.length).fill(false))
-  }
-
-  /* ---------------- photo upload ---------------- */
-
-  const handlePhotoUpload = async (e) => {
-    if (!user || !activeChallenge) return
-
-    const file = e.target.files[0]
-    if (!file) return
-
-    try {
-      const fileRef = ref(
-        storage,
-        `users/${user.uid}/${activeChallenge.id}/day-${day}.jpg`
-      )
-
-      await uploadBytes(fileRef, file)
-
-      const downloadURL = await getDownloadURL(fileRef)
-
-      const updatedPhotos = {
-        ...photos,
-        [day]: downloadURL
-      }
-
       await updateDoc(
         doc(db, "users", user.uid, "challenges", activeChallenge.id),
         {
-          "progress.photos": updatedPhotos
+          progress: {
+            day: day + 1,
+            completedDays: updatedCompleted,
+            perfectDays: updatedPerfect,
+            longestStreak: streakData.longest,
+            photos
+          }
         }
       )
 
-      setToast({
-        type: "success",
-        message: "📸 Photo Uploaded Successfully!"
-      })
-
-      setTimeout(() => setToast(null), 2500)
-
-    } catch (err) {
-      console.error(err)
-      setToast({
-        type: "error",
-        message: "Upload failed."
-      })
-      setTimeout(() => setToast(null), 2500)
+      setToast({ type: "success", message: "✅ Day Completed!" })
     }
+
+    setTimeout(() => setToast(null), 2500)
+    setTasks(Array(activeChallenge.tasks.length).fill(false))
   }
-  /* ---------------- LOADING STATES ---------------- */
+
+  const handlePhotoUpload = async (e) => {
+    if (!user || !activeChallenge) return
+    const file = e.target.files[0]
+    if (!file) return
+
+    const fileRef = ref(
+      storage,
+      `users/${user.uid}/${activeChallenge.id}/day-${day}.jpg`
+    )
+
+    await uploadBytes(fileRef, file)
+    const downloadURL = await getDownloadURL(fileRef)
+
+    await updateDoc(
+      doc(db, "users", user.uid, "challenges", activeChallenge.id),
+      {
+        "progress.photos": {
+          ...photos,
+          [day]: downloadURL
+        }
+      }
+    )
+
+    setToast({ type: "success", message: "📸 Uploaded!" })
+    setTimeout(() => setToast(null), 2500)
+  }
 
   if (authLoading) return <div>Checking authentication...</div>
-
-  if (!user)
-    return (
-      <AppUI
-        user={null}
-        loginWithGoogle={loginWithGoogle}
-      />
-    )
-
+  if (!user) return <AppUI user={null} loginWithGoogle={loginWithGoogle} />
   if (dataLoading) return <div>Loading challenges...</div>
 
-  /* ---------------- UI ---------------- */
-
   const completionPercent = activeChallenge
-    ? Math.round(
-      (completedDays.length / activeChallenge.duration) * 100
-    )
+    ? Math.round((completedDays.length / activeChallenge.duration) * 100)
     : 0
 
   const currentStreak = calculateStreak(perfectDays).current
@@ -318,7 +248,6 @@ export default function App() {
   return (
     <AppUI
       user={user}
-      loginWithGoogle={loginWithGoogle}
       logout={logout}
       challenges={challenges}
       activeChallenge={activeChallenge}

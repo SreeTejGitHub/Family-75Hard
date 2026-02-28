@@ -9,146 +9,137 @@ export default function AppUI({
     activeChallenge,
     activeChallengeId,
     setActiveChallengeId,
-    day = 1,
-    completedDays = [],
-    longestStreak = 0,
-    completionPercent = 0,
-    currentStreak = 0,
-    tasks = [],
+    day,
+    completedDays,
+    longestStreak,
+    completionPercent,
+    currentStreak,
+    tasks,
     toggleTask,
     completeDay,
-    reset,
-    photos = {},
+    photos,
     createChallenge,
     handlePhotoUpload,
     toast
 }) {
 
-    /* ---------------- MENU ---------------- */
-
     const [menuOpen, setMenuOpen] = useState(false)
-    const [currentView, setCurrentView] = useState("home")
+    const [view, setView] = useState("home")
     const menuRef = useRef(null)
 
-    const menuItemStyle = {
-        padding: "8px",
-        cursor: "pointer",
-        borderRadius: "6px",
-        fontSize: "14px"
-    }
-
     useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (menuRef.current && !menuRef.current.contains(event.target)) {
+        const handler = (e) => {
+            if (menuRef.current && !menuRef.current.contains(e.target)) {
                 setMenuOpen(false)
             }
         }
-
-        document.addEventListener("mousedown", handleClickOutside)
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside)
-        }
+        document.addEventListener("mousedown", handler)
+        return () => document.removeEventListener("mousedown", handler)
     }, [])
 
-    /* ---------------- HEADER (GLOBAL) ---------------- */
+    if (!user) {
+        return (
+            <div style={styles.container}>
+                <div style={styles.card}>
+                    <h1>75 Hard</h1>
+                    <button onClick={loginWithGoogle}>Sign in</button>
+                </div>
+            </div>
+        )
+    }
 
     const Header = () => (
         <div style={styles.headerRow}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                {user.photoURL && (
-                    <img
-                        src={user.photoURL}
-                        alt="profile"
-                        width="28"
-                        style={{ borderRadius: "50%" }}
-                    />
-                )}
-                <span style={styles.userLabel}>
-                    {user.displayName || "User"}
-                </span>
-            </div>
-
-            <div style={{ position: "relative" }} ref={menuRef}>
-                <button
-                    onClick={() => setMenuOpen(prev => !prev)}
-                    style={{
-                        background: "none",
-                        border: "none",
-                        color: "white",
-                        fontSize: "20px",
-                        cursor: "pointer"
-                    }}
-                >
-                    ☰
-                </button>
-
+            <span>{user.displayName}</span>
+            <div ref={menuRef} style={{ position: "relative" }}>
+                <button onClick={() => setMenuOpen(!menuOpen)}>☰</button>
                 {menuOpen && (
                     <div
                         style={{
                             position: "absolute",
-                            top: "40px",
+                            top: "45px",
                             right: "0",
                             background: "#1f2937",
-                            borderRadius: "8px",
-                            padding: "8px",
-                            width: "180px",
-                            boxShadow: "0 8px 30px rgba(0,0,0,0.5)",
-                            zIndex: 1000
+                            borderRadius: "14px",
+                            padding: "12px",
+                            width: "200px",
+                            boxShadow: "0 15px 40px rgba(0,0,0,0.6)",
+                            zIndex: 1000,
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "10px"
                         }}
                     >
+
+                        {/* Profile */}
                         <div
-                            style={menuItemStyle}
                             onClick={() => {
-                                setCurrentView("profile")
+                                setView("profile")
                                 setMenuOpen(false)
                             }}
-                        >
-                            👤 Profile
-                        </div>
-
-                        <div
-                            style={menuItemStyle}
-                            onClick={() => {
-                                setCurrentView("home")
-                                setMenuOpen(false)
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "12px",
+                                padding: "10px",
+                                borderRadius: "10px",
+                                cursor: "pointer",
+                                fontSize: "16px"
                             }}
                         >
-                            📋 Challenges
+                            <span>👤</span>
+                            <span>Profile</span>
                         </div>
 
+                        {/* Challenges */}
                         <div
-                            style={{ ...menuItemStyle, color: "#ef4444" }}
+                            onClick={() => {
+                                setActiveChallengeId(null)
+                                setView("home")
+                                setMenuOpen(false)
+                            }}
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "12px",
+                                padding: "10px",
+                                borderRadius: "10px",
+                                cursor: "pointer",
+                                fontSize: "16px"
+                            }}
+                        >
+                            <span>📋</span>
+                            <span>Challenges</span>
+                        </div>
+
+                        {/* Logout */}
+                        <div
                             onClick={() => {
                                 logout()
                                 setMenuOpen(false)
                             }}
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "12px",
+                                padding: "10px",
+                                borderRadius: "10px",
+                                cursor: "pointer",
+                                fontSize: "16px",
+                                color: "#ef4444"
+                            }}
                         >
-                            🚪 Logout
+                            <span>🚪</span>
+                            <span>Logout</span>
                         </div>
+
                     </div>
                 )}
             </div>
         </div>
     )
 
-    /* ---------------- NOT LOGGED IN ---------------- */
-
-    if (!user) {
-        return (
-            <div style={styles.container}>
-                <div style={styles.card}>
-                    <h1 style={styles.title}>75 Hard</h1>
-                    <button style={styles.primaryBtn} onClick={loginWithGoogle}>
-                        Sign in with Google
-                    </button>
-                </div>
-            </div>
-        )
-    }
-
-    /* ---------------- PROFILE SCREEN (MUST BE FIRST) ---------------- */
-
-    if (currentView === "profile") {
+    if (view === "profile") {
 
         const totalCompletionsAll = challenges.reduce(
             (sum, c) => sum + (c.totalCompletions || 0),
@@ -168,98 +159,141 @@ export default function AppUI({
         return (
             <div style={styles.container}>
                 <div style={styles.card}>
+
                     <Header />
 
-                    <div style={{ textAlign: "center", marginTop: "20px" }}>
+                    {/* Profile Section */}
+                    <div style={{
+                        textAlign: "center",
+                        marginTop: "30px"
+                    }}>
+
                         {user.photoURL && (
                             <img
                                 src={user.photoURL}
                                 alt="profile"
-                                width="90"
-                                style={{ borderRadius: "50%", marginBottom: "10px" }}
+                                width="120"
+                                height="120"
+                                style={{
+                                    borderRadius: "50%",
+                                    objectFit: "cover",
+                                    marginBottom: "20px",
+                                    boxShadow: "0 10px 30px rgba(0,0,0,0.6)"
+                                }}
                             />
                         )}
-                        <h2>{user.displayName}</h2>
-                        <div style={{ opacity: 0.7 }}>{user.email}</div>
+
+                        <h1 style={{
+                            fontSize: "28px",
+                            marginBottom: "8px"
+                        }}>
+                            {user.displayName}
+                        </h1>
+
+                        <div style={{
+                            opacity: 0.6,
+                            fontSize: "16px"
+                        }}>
+                            {user.email}
+                        </div>
+
                     </div>
 
+                    {/* Stats Card */}
                     <div style={{
-                        background: "#111827",
-                        padding: "16px",
-                        borderRadius: "10px",
-                        marginTop: "20px"
+                        marginTop: "30px",
+                        background: "linear-gradient(135deg, #1e293b, #0f172a)",
+                        padding: "20px",
+                        borderRadius: "16px",
+                        boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "12px",
+                        fontSize: "18px"
                     }}>
                         <div>🏆 Total Completions: {totalCompletionsAll}</div>
                         <div>🔥 Best Ever Streak: {bestEverAcrossAll}</div>
                         <div>📋 Total Challenges: {challenges.length}</div>
                     </div>
 
+                    {/* Back Button */}
                     <button
-                        style={{ ...styles.primaryBtn, marginTop: "20px" }}
-                        onClick={() => setCurrentView("home")}
+                        style={{
+                            ...styles.primaryBtn,
+                            marginTop: "30px"
+                        }}
+                        onClick={() => setView("home")}
                     >
                         ← Back
                     </button>
+
                 </div>
             </div>
         )
     }
-
-    /* ---------------- NO CHALLENGES ---------------- */
-
-    if (challenges.length === 0) {
-        return (
-            <div style={styles.container}>
-                <div style={styles.card}>
-                    <Header />
-                    <h1 style={styles.title}>No Challenges Yet</h1>
-                    <button style={styles.primaryBtn} onClick={createChallenge}>
-                        + Create Challenge
-                    </button>
-                </div>
-            </div>
-        )
-    }
-
-    /* ---------------- SELECT CHALLENGE SCREEN ---------------- */
 
     if (!activeChallengeId || !activeChallenge) {
         return (
             <div style={styles.container}>
                 <div style={styles.card}>
+
                     <Header />
 
-                    <h1 style={styles.title}>Select Challenge</h1>
+                    <h1 style={{
+                        fontSize: "36px",
+                        marginTop: "30px",
+                        marginBottom: "30px"
+                    }}>
+                        Select Challenge
+                    </h1>
 
-                    {challenges.map(c => (
-                        <button
-                            key={c.id}
-                            style={styles.primaryBtn}
-                            onClick={() => {
-                                setCurrentView("home")
-                                setActiveChallengeId(c.id)
-                            }}
-                        >
-                            {c.name}
-                        </button>
-                    ))}
+                    {/* Challenge List */}
+                    <div style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "16px"
+                    }}>
+                        {challenges.map(c => (
+                            <div
+                                key={c.id}
+                                onClick={() => setActiveChallengeId(c.id)}
+                                style={{
+                                    padding: "18px",
+                                    borderRadius: "14px",
+                                    background: "linear-gradient(135deg, #1e293b, #0f172a)",
+                                    cursor: "pointer",
+                                    fontSize: "20px",
+                                    fontWeight: "600",
+                                    boxShadow: "0 8px 25px rgba(0,0,0,0.5)"
+                                }}
+                                onMouseEnter={(e) =>
+                                    e.currentTarget.style.transform = "scale(1.02)"
+                                }
+                                onMouseLeave={(e) =>
+                                    e.currentTarget.style.transform = "scale(1)"
+                                }
+                            >
+                                {c.name}
+                            </div>
+                        ))}
+                    </div>
 
-                    <button style={styles.primaryBtn} onClick={createChallenge}>
+                    {/* Create Button */}
+                    <button
+                        style={{
+                            ...styles.primaryBtn,
+                            marginTop: "30px",
+                            fontSize: "18px"
+                        }}
+                        onClick={createChallenge}
+                    >
                         + Create Challenge
                     </button>
+
                 </div>
             </div>
         )
     }
-    /* ---------------- ACTIVE CHALLENGE UI ---------------- */
-
-    const totalCompletions = activeChallenge.totalCompletions || 0
-    const history = activeChallenge.history || []
-
-    const bestEverStreak = Math.max(
-        longestStreak,
-        ...history.map(h => h.longestStreak || 0)
-    )
 
     return (
         <div style={styles.container}>
@@ -273,6 +307,7 @@ export default function AppUI({
                     Day {day} of {activeChallenge.duration}
                 </p>
 
+                {/* Progress Bar */}
                 <div style={styles.progressBar}>
                     <div
                         style={{
@@ -282,41 +317,53 @@ export default function AppUI({
                     />
                 </div>
 
+                {/* Streak + Trophy */}
                 <div style={styles.streakBox}>
                     🔥 {currentStreak} | 🏆 {longestStreak}
                 </div>
 
+                {/* Completion Stats */}
                 <div style={{ marginTop: "10px", fontSize: "14px" }}>
-                    🔁 Completed: {totalCompletions} times
+                    🔁 Completed: {activeChallenge.totalCompletions || 0} times
                 </div>
 
                 <div style={{ marginTop: "5px", fontSize: "14px" }}>
-                    🔥 Best Ever Streak: {bestEverStreak}
-                </div>
-
-                <div style={styles.grid}>
-                    {Array.from({ length: activeChallenge.duration }, (_, i) => {
-                        const d = i + 1
-                        return (
-                            <div
-                                key={i}
-                                style={{
-                                    ...styles.gridItem,
-                                    backgroundColor: completedDays.includes(d)
-                                        ? "#22c55e"
-                                        : d === day
-                                            ? "#3b82f6"
-                                            : "#1f2937"
-                                }}
-                            />
+                    🔥 Best Ever Streak: {
+                        Math.max(
+                            longestStreak,
+                            ...(activeChallenge.history || []).map(h => h.longestStreak || 0)
                         )
-                    })}
+                    }
                 </div>
 
+                {/* Day Grid */}
+                <div style={styles.grid}>
+                    {Array.from(
+                        { length: activeChallenge.duration },
+                        (_, i) => {
+                            const d = i + 1
+                            return (
+                                <div
+                                    key={i}
+                                    style={{
+                                        ...styles.gridItem,
+                                        backgroundColor: completedDays.includes(d)
+                                            ? "#22c55e"
+                                            : d === day
+                                                ? "#3b82f6"
+                                                : "#1f2937"
+                                    }}
+                                />
+                            )
+                        }
+                    )}
+                </div>
+
+                {/* Tasks */}
                 {(activeChallenge.tasks || []).map((task, i) => (
                     <div
                         key={i}
-                        onClick={() => toggleTask?.(i)}
+                        onClick={() => toggleTask(i)}
                         style={{
                             ...styles.task,
                             backgroundColor: tasks[i] ? "#16a34a" : "#1f2937"
@@ -326,6 +373,7 @@ export default function AppUI({
                     </div>
                 ))}
 
+                {/* Upload */}
                 <div style={{ marginTop: "15px" }}>
                     <input
                         id="photoUpload"
@@ -353,13 +401,12 @@ export default function AppUI({
                     />
                 )}
 
+                {/* Complete Button */}
                 <button
                     style={{
                         ...styles.primaryBtn,
-                        opacity: day > activeChallenge.duration ? 0.5 : 1,
-                        cursor: day > activeChallenge.duration
-                            ? "not-allowed"
-                            : "pointer"
+                        marginTop: "20px",
+                        opacity: day > activeChallenge.duration ? 0.5 : 1
                     }}
                     onClick={completeDay}
                     disabled={day > activeChallenge.duration}
@@ -368,12 +415,6 @@ export default function AppUI({
                         ? "Challenge Completed 🎉"
                         : "Complete Day"}
                 </button>
-
-                {reset && (
-                    <button style={styles.resetBtn} onClick={reset}>
-                        Reset
-                    </button>
-                )}
 
             </div>
 
