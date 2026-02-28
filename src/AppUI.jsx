@@ -18,9 +18,7 @@ export default function AppUI({
     tasks,
     toggleTask,
     completeDay,
-    photos,
     createChallenge,
-    handlePhotoUpload,
     toast
 }) {
 
@@ -425,34 +423,6 @@ export default function AppUI({
                         {task}
                     </div>
                 ))}
-
-                {/* Upload */}
-                <div style={{ marginTop: "15px" }}>
-                    <input
-                        id="photoUpload"
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoUpload}
-                        style={{ display: "none" }}
-                    />
-
-                    <button
-                        style={styles.primaryBtn}
-                        onClick={() =>
-                            document.getElementById("photoUpload")?.click()
-                        }
-                    >
-                        📸 Upload Progress Photo
-                    </button>
-                </div>
-
-                {photos?.[day] && (
-                    <img
-                        src={photos[day]}
-                        alt="progress"
-                        style={styles.previewImage}
-                    />
-                )}
 
                 {/* Complete Button */}
                 <button

@@ -1,9 +1,6 @@
 import { useState, useEffect, useMemo } from "react"
 import AppUI from "./AppUI"
 
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
-import { storage } from "./firebase"
-
 import {
   signInWithPopup,
   signOut,
@@ -82,7 +79,6 @@ export default function App() {
   const completedDays = progress.completedDays || []
   const perfectDays = progress.perfectDays || []
   const longestStreak = progress.longestStreak || 0
-  const photos = progress.photos || {}
 
   useEffect(() => {
     if (activeChallenge) {
@@ -129,7 +125,6 @@ export default function App() {
         completedDays: [],
         perfectDays: [],
         longestStreak: 0,
-        photos: {}
       },
       history: [],
       totalCompletions: 0
@@ -175,7 +170,6 @@ export default function App() {
             completedDays: [],
             perfectDays: [],
             longestStreak: 0,
-            photos: {}
           }
         }
       )
@@ -190,7 +184,6 @@ export default function App() {
             completedDays: updatedCompleted,
             perfectDays: updatedPerfect,
             longestStreak: streakData.longest,
-            photos
           }
         }
       )
@@ -200,33 +193,6 @@ export default function App() {
 
     setTimeout(() => setToast(null), 2500)
     setTasks(Array(activeChallenge.tasks.length).fill(false))
-  }
-
-  const handlePhotoUpload = async (e) => {
-    if (!user || !activeChallenge) return
-    const file = e.target.files[0]
-    if (!file) return
-
-    const fileRef = ref(
-      storage,
-      `users/${user.uid}/${activeChallenge.id}/day-${day}.jpg`
-    )
-
-    await uploadBytes(fileRef, file)
-    const downloadURL = await getDownloadURL(fileRef)
-
-    await updateDoc(
-      doc(db, "users", user.uid, "challenges", activeChallenge.id),
-      {
-        "progress.photos": {
-          ...photos,
-          [day]: downloadURL
-        }
-      }
-    )
-
-    setToast({ type: "success", message: "📸 Uploaded!" })
-    setTimeout(() => setToast(null), 2500)
   }
 
   if (authLoading) return <div>Checking authentication...</div>
@@ -261,8 +227,6 @@ export default function App() {
       completeDay={completeDay}
       createChallenge={createChallenge}
       toast={toast}
-      handlePhotoUpload={handlePhotoUpload}
-      photos={photos}
     />
   )
 }
