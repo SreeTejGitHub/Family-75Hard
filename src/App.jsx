@@ -117,19 +117,13 @@ export default function App() {
     setActiveChallengeId(null)
   }
 
-  const createChallenge = async () => {
+  const createChallenge = async (challengeData) => {
     if (!user) return
 
-    const name = prompt("Challenge name?")
-    const duration = Number(prompt("How many days?"))
-    const tasksInput = prompt("Tasks (comma separated)?")
-
-    if (!name || !duration || !tasksInput) return
-
     const challenge = {
-      name,
-      duration,
-      tasks: tasksInput.split(",").map(t => t.trim()),
+      name: challengeData.name,
+      duration: challengeData.duration,
+      tasks: challengeData.tasks,
       progress: {
         day: 1,
         completedDays: [],

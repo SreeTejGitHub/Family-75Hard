@@ -1,5 +1,6 @@
 import styles from "./styles"
 import { useState, useRef, useEffect } from "react"
+import CreateChallengeModal from "./components/CreateChallengeModal"
 
 export default function AppUI({
     user,
@@ -26,6 +27,7 @@ export default function AppUI({
     const [menuOpen, setMenuOpen] = useState(false)
     const [view, setView] = useState("home")
     const menuRef = useRef(null)
+    const [showCreateModal, setShowCreateModal] = useState(false)
 
     useEffect(() => {
         const handler = (e) => {
@@ -285,12 +287,17 @@ export default function AppUI({
                             marginTop: "30px",
                             fontSize: "18px"
                         }}
-                        onClick={createChallenge}
+                        onClick={() => setShowCreateModal(true)}
                     >
                         + Create Challenge
                     </button>
 
                 </div>
+                <CreateChallengeModal
+                    isOpen={showCreateModal}
+                    onClose={() => setShowCreateModal(false)}
+                    onCreate={createChallenge}
+                />
             </div>
         )
     }
