@@ -7,7 +7,12 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.png', 'logo.png'],
+
+      // 🔥 Enable PWA in dev mode
+      // devOptions: {
+      //   enabled: true
+      // },
+
       manifest: {
         name: 'My Challenge Tracker',
         short_name: 'MCT',
@@ -17,10 +22,11 @@ export default defineConfig({
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
+
         icons: [
           {
-            src: '/icon-192.png',
-            sizes: '192x192',
+            src: '/icon-196.png',   // 🔥 must actually be 192x192 file
+            sizes: '196x196',
             type: 'image/png'
           },
           {
