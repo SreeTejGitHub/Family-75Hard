@@ -2,7 +2,9 @@ import styles from "./styles"
 import { useState, useRef, useEffect } from "react"
 import CreateChallengeModal from "./components/CreateChallengeModal"
 import logo from "./assets/logo.png"
+
 import LoginScreen from "./screens/LoginScreen"
+import Header from "./components/Header"
 
 export default function AppUI({
     user,
@@ -46,105 +48,6 @@ export default function AppUI({
         return <LoginScreen loginWithGoogle={loginWithGoogle} />
     }
 
-    const Header = () => (
-        <div style={styles.headerRow}>
-            <img
-                src={logo}
-                alt="logo"
-                style={{
-                    width: "100px",
-                    height: "50px",
-                    borderRadius: "6px"
-                }}
-            />
-            <span>{user.displayName}</span>
-            <div ref={menuRef} style={{ position: "relative" }}>
-                <button onClick={() => setMenuOpen(!menuOpen)}>☰</button>
-                {menuOpen && (
-                    <div
-                        style={{
-                            position: "absolute",
-                            top: "45px",
-                            right: "0",
-                            background: "#1f2937",
-                            borderRadius: "14px",
-                            padding: "12px",
-                            width: "200px",
-                            boxShadow: "0 15px 40px rgba(0,0,0,0.6)",
-                            zIndex: 1000,
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "10px"
-                        }}
-                    >
-
-                        {/* Profile */}
-                        <div
-                            onClick={() => {
-                                setView("profile")
-                                setMenuOpen(false)
-                            }}
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "12px",
-                                padding: "10px",
-                                borderRadius: "10px",
-                                cursor: "pointer",
-                                fontSize: "16px"
-                            }}
-                        >
-                            <span>👤</span>
-                            <span>Profile</span>
-                        </div>
-
-                        {/* Challenges */}
-                        <div
-                            onClick={() => {
-                                setActiveChallengeId(null)
-                                setView("home")
-                                setMenuOpen(false)
-                            }}
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "12px",
-                                padding: "10px",
-                                borderRadius: "10px",
-                                cursor: "pointer",
-                                fontSize: "16px"
-                            }}
-                        >
-                            <span>📋</span>
-                            <span>Challenges</span>
-                        </div>
-
-                        {/* Logout */}
-                        <div
-                            onClick={() => {
-                                logout()
-                                setMenuOpen(false)
-                            }}
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "12px",
-                                padding: "10px",
-                                borderRadius: "10px",
-                                cursor: "pointer",
-                                fontSize: "16px",
-                                color: "#ef4444"
-                            }}
-                        >
-                            <span>🚪</span>
-                            <span>Logout</span>
-                        </div>
-
-                    </div>
-                )}
-            </div>
-        </div>
-    )
 
     if (view === "profile") {
 
@@ -167,8 +70,12 @@ export default function AppUI({
             <div style={styles.container}>
                 <div style={styles.card}>
 
-                    <Header />
-
+                    <Header
+                        user={user}
+                        logout={logout}
+                        setView={setView}
+                        setActiveChallengeId={setActiveChallengeId}
+                    />
                     {/* Profile Section */}
                     <div style={{
                         textAlign: "center",
@@ -244,8 +151,12 @@ export default function AppUI({
             <div style={styles.container}>
                 <div style={styles.card}>
 
-                    <Header />
-
+                    <Header
+                        user={user}
+                        logout={logout}
+                        setView={setView}
+                        setActiveChallengeId={setActiveChallengeId}
+                    />
                     <h1 style={{
                         fontSize: "36px",
                         marginTop: "30px",
@@ -373,8 +284,12 @@ export default function AppUI({
         <div style={styles.container}>
             <div style={styles.card}>
 
-                <Header />
-
+                <Header
+                    user={user}
+                    logout={logout}
+                    setView={setView}
+                    setActiveChallengeId={setActiveChallengeId}
+                />
                 <h1 style={styles.title}>{activeChallenge.name}</h1>
 
                 <p style={styles.subtitle}>
