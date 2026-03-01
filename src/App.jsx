@@ -27,8 +27,8 @@ export default function App() {
   const [dataLoading, setDataLoading] = useState(true)
 
   const [activeChallengeId, setActiveChallengeId] = useState(null)
-
   const [tasks, setTasks] = useState([])
+  const [taskProgress, setTaskProgress] = useState({})
   const [toast, setToast] = useState(null)
 
   /* ---------------- AUTH ---------------- */
@@ -82,10 +82,24 @@ export default function App() {
 
   useEffect(() => {
     if (activeChallenge) {
+      const initialProgress = {}
+      activeChallenge.tasks.forEach((_, i) => {
+        initialProgress[i] = 0
+      })
+
+      setTaskProgress(initialProgress)
       setTasks(Array(activeChallenge.tasks.length).fill(false))
     }
   }, [activeChallengeId])
 
+  /* ---------------- update task progress ---------------- */
+
+  const updateTaskProgress = (index, value) => {
+    setTaskProgress(prev => ({
+      ...prev,
+      [index]: value
+    }))
+  }
   /* ---------------- UTIL ---------------- */
 
   const calculateStreak = (days) => {
@@ -227,6 +241,8 @@ export default function App() {
       completeDay={completeDay}
       createChallenge={createChallenge}
       toast={toast}
+      taskProgress={taskProgress}
+      updateTaskProgress={updateTaskProgress}
     />
   )
 }

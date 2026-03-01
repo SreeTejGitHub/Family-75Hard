@@ -19,13 +19,16 @@ export default function AppUI({
     toggleTask,
     completeDay,
     createChallenge,
-    toast
+    toast,
+    taskProgress,
+    updateTaskProgress
 }) {
 
     const [menuOpen, setMenuOpen] = useState(false)
     const [view, setView] = useState("home")
     const menuRef = useRef(null)
     const [showCreateModal, setShowCreateModal] = useState(false)
+    const [progressModal, setProgressModal] = useState(null)
 
     useEffect(() => {
         const handler = (e) => {
@@ -493,23 +496,62 @@ export default function AppUI({
                 </div>
 
                 {/* Tasks */}
-                {(activeChallenge.tasks || []).map((task, i) => (
-                    <div
-                        key={i}
-                        style={{
-                            ...styles.task,
-                            backgroundColor: tasks[i] ? "#16a34a" : "#1f2937"
-                        }}
-                    >
-                        <div style={{ fontWeight: "600" }}>
-                            {task.name}
-                        </div>
+                {(activeChallenge.tasks || []).map((task, i) => {
+                    const current = taskProgress[i] || 0
+                    const percent = Math.min(
+                        100,
+                        Math.round((current / task.target) * 100)
+                    )
 
-                        <div style={{ fontSize: "13px", opacity: 0.6 }}>
-                            Target: {task.target} {task.unit}
+                    return (
+                        <div
+                            key={i}
+                            onClick={() => {
+                                if (task.target === 1) {
+                                    updateTaskProgress(i, current === 1 ? 0 : 1)
+                                } else {
+                                    setProgressModal(i)
+                                }
+                            }}
+                            style={{
+                                ...styles.task,
+                                backgroundColor: "#1f2937",
+                                cursor: "pointer"
+                            }}
+                        >
+                            <div style={{ fontWeight: "600" }}>
+                                {task.name}
+                            </div>
+
+                            <div style={{ fontSize: "13px", opacity: 0.6 }}>
+                                {current} / {task.target} {task.unit}
+                            </div>
+
+                            {/* Progress Bar */}
+                            <div
+                                style={{
+                                    marginTop: "6px",
+                                    height: "6px",
+                                    background: "#0f172a",
+                                    borderRadius: "6px",
+                                    overflow: "hidden"
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        width: `${percent}%`,
+                                        height: "100%",
+                                        background:
+                                            percent === 100
+                                                ? "#22c55e"
+                                                : "#3b82f6",
+                                        transition: "0.3s ease"
+                                    }}
+                                />
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    )
+                })}
 
                 {/* Complete Button */}
                 <button
@@ -544,6 +586,82 @@ export default function AppUI({
                     {toast.message}
                 </div>
             )}
+
+            {
+                progressModal !== null && (
+                    <div style={modalStyle.overlay}>
+                        <div style={modalStyle.card}>
+                            <h3>{activeChallenge.tasks[progressModal].name}</h3>
+
+                            <p>
+                                Target: {activeChallenge.tasks[progressModal].target}{" "}
+                                {activeChallenge.tasks[progressModal].unit}
+                            </p>
+
+                            <input
+                                type="number"
+                                min="0"
+                                max={activeChallenge.tasks[progressModal].target}
+                                value={taskProgress[progressModal] || 0}
+                                onChange={(e) =>
+                                    updateTaskProgress(
+                                        progressModal,
+                                        Number(e.target.value)
+                                    )
+                                }
+                                style={modalStyle.input}
+                            />
+
+                            <div style={{ marginTop: "10px", fontSize: "14px" }}>
+                                {Math.round(
+                                    ((taskProgress[progressModal] || 0) /
+                                        activeChallenge.tasks[progressModal].target) *
+                                    100
+                                )}
+                                %
+                            </div>
+
+                            <div style={modalStyle.actions}>
+                                <button onClick={() => setProgressModal(null)}>
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
         </div>
     )
+}
+
+const modalStyle = {
+    overlay: {
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.7)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 2000
+    },
+    card: {
+        background: "#111827",
+        padding: "25px",
+        borderRadius: "12px",
+        width: "300px"
+    },
+    input: {
+        width: "100%",
+        padding: "10px",
+        marginTop: "10px",
+        borderRadius: "8px",
+        border: "none",
+        background: "#1f2937",
+        color: "white"
+    },
+    actions: {
+        display: "flex",
+        justifyContent: "flex-end",
+        marginTop: "15px"
+    }
 }
