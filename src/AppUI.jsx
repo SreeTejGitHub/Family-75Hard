@@ -2,6 +2,7 @@ import styles from "./styles"
 import { useState, useRef, useEffect } from "react"
 import CreateChallengeModal from "./components/CreateChallengeModal"
 import logo from "./assets/logo.png"
+import LoginScreen from "./screens/LoginScreen"
 
 export default function AppUI({
     user,
@@ -42,51 +43,7 @@ export default function AppUI({
     }, [])
 
     if (!user) {
-        return (
-            <div style={styles.container}>
-                <div style={{
-                    ...styles.card,
-                    textAlign: "center",
-                    padding: "60px 40px"
-                }}>
-
-                    <img
-                        src={logo}
-                        alt="My Challenge Tracker"
-                        style={{
-                            width: "300px",
-                            marginBottom: "0px"
-                        }}
-                    />
-
-                    <p style={{
-                        opacity: 0.6,
-                        marginBottom: "40px",
-                        fontSize: "16px"
-                    }}>
-                        Track your habits. Build discipline. Stay consistent.
-                    </p>
-
-                    <button
-                        onClick={loginWithGoogle}
-                        style={{
-                            background: "#2563eb",
-                            color: "white",
-                            padding: "14px 22px",
-                            borderRadius: "12px",
-                            fontSize: "16px",
-                            fontWeight: "600",
-                            cursor: "pointer",
-                            border: "none",
-                            boxShadow: "0 8px 20px rgba(37,99,235,0.5)"
-                        }}
-                    >
-                        🔐 Sign in using Google
-                    </button>
-
-                </div>
-            </div>
-        )
+        return <LoginScreen loginWithGoogle={loginWithGoogle} />
     }
 
     const Header = () => (
