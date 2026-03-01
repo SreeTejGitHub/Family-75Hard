@@ -3,6 +3,8 @@ import styles from "../styles"
 import Header from "../components/Header"
 import icon from "../assets/icon.png"
 
+import ProgressModal from "../components/ProgressModal"
+
 export default function ChallengeDetailScreen({
     user,
     logout,
@@ -200,48 +202,14 @@ export default function ChallengeDetailScreen({
             )}
 
             {/* Progress Modal */}
-            {progressModal !== null && (
-                <div style={modalStyle.overlay}>
-                    <div style={modalStyle.card}>
-                        <h3>{activeChallenge.tasks[progressModal].name}</h3>
-
-                        <p>
-                            Target:{" "}
-                            {activeChallenge.tasks[progressModal].target}{" "}
-                            {activeChallenge.tasks[progressModal].unit}
-                        </p>
-
-                        <input
-                            type="number"
-                            min="0"
-                            max={activeChallenge.tasks[progressModal].target}
-                            value={taskProgress[progressModal] || 0}
-                            onChange={(e) =>
-                                updateTaskProgress(
-                                    progressModal,
-                                    Number(e.target.value)
-                                )
-                            }
-                            style={modalStyle.input}
-                        />
-
-                        <div style={{ marginTop: "10px", fontSize: "14px" }}>
-                            {Math.round(
-                                ((taskProgress[progressModal] || 0) /
-                                    activeChallenge.tasks[progressModal].target) *
-                                100
-                            )}
-                            %
-                        </div>
-
-                        <div style={modalStyle.actions}>
-                            <button onClick={() => setProgressModal(null)}>
-                                Close
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ProgressModal
+                isOpen={progressModal !== null}
+                onClose={() => setProgressModal(null)}
+                activeChallenge={activeChallenge}
+                progressIndex={progressModal}
+                taskProgress={taskProgress}
+                updateTaskProgress={updateTaskProgress}
+            />
         </div>
     )
 }

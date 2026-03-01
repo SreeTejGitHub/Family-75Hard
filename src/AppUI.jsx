@@ -64,6 +64,7 @@ export default function AppUI({
             />
         )
     }
+    
     // Challenge Screen
     if (!activeChallengeId || !activeChallenge) {
         return (
