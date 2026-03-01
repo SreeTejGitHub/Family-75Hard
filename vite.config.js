@@ -9,9 +9,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
 
       // 🔥 Enable PWA in dev mode
-      // devOptions: {
-      //   enabled: true
-      // },
+      devOptions: {
+        enabled: true
+      },
 
       manifest: {
         name: 'My Challenge Tracker',
