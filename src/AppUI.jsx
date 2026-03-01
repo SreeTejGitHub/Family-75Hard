@@ -455,18 +455,38 @@ export default function AppUI({
                         { length: activeChallenge.duration },
                         (_, i) => {
                             const d = i + 1
+                            const isCompleted = completedDays.includes(d)
+                            const isCurrent = d === day
+
                             return (
                                 <div
                                     key={i}
                                     style={{
                                         ...styles.gridItem,
-                                        backgroundColor: completedDays.includes(d)
-                                            ? "#22c55e"
-                                            : d === day
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        backgroundColor: !isCompleted
+                                            ? isCurrent
                                                 ? "#3b82f6"
                                                 : "#1f2937"
+                                            : "#0f172a",
+                                        overflow: "hidden"
                                     }}
-                                />
+                                >
+                                    {isCompleted && (
+                                        <img
+                                            src="/icon.png"
+                                            alt="completed"
+                                            style={{
+                                                width: "70%",
+                                                height: "70%",
+                                                objectFit: "contain",
+                                                opacity: 0.95
+                                            }}
+                                        />
+                                    )}
+                                </div>
                             )
                         }
                     )}

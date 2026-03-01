@@ -38,7 +38,16 @@ const styles = {
     gap: "4px",
     marginBottom: "20px"
   },
-  gridItem: { paddingTop: "100%", borderRadius: "3px" },
+  gridItem: {
+    width: "100%",
+    aspectRatio: "1 / 1",   // ✅ Forces perfect square
+    borderRadius: "6px",
+    overflow: "hidden",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#1f2937"
+  },
   task: {
     padding: "12px",
     borderRadius: "8px",
@@ -76,7 +85,7 @@ const styles = {
     borderRadius: "8px",
     marginTop: "10px"
   }
-  
+
 }
 
 const styleSheet = document.styleSheets[0]
