@@ -10,6 +10,8 @@ import ChallengeListScreen from "./screens/ChallengeListScreen"
 import ChallengeDetailScreen from "./screens/ChallengeDetailScreen"
 import WeeklyTrackerScreen from "./screens/WeeklyTrackerScreen"
 import HealthDashboardScreen from "./screens/HealthDashboardScreen"
+import CalorieTrackerScreen from "./screens/CalorieTrackerScreen"
+import useHealthMetrics from "./hooks/useHealthMetrics"
 
 export default function AppUI({
     user,
@@ -54,6 +56,8 @@ export default function AppUI({
         return <LoginScreen loginWithGoogle={loginWithGoogle} />
     }
 
+    const { calorieTarget } = useHealthMetrics(user)
+
     //Profile Screen
     if (view === "profile") {
         return (
@@ -83,6 +87,17 @@ export default function AppUI({
     if (view === "health") {
         return (
             <HealthDashboardScreen
+                user={user}
+                logout={logout}
+                setView={setView}
+                setActiveChallengeId={setActiveChallengeId}
+            />
+        )
+    }
+
+    if (view === "calories") {
+        return (
+            <CalorieTrackerScreen
                 user={user}
                 logout={logout}
                 setView={setView}

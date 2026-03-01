@@ -104,6 +104,17 @@ export default function Header({
                             <span>Health Dashboard</span>
                         </div>
 
+                        <div
+                            onClick={() => {
+                                setView("calories")
+                                setMenuOpen(false)
+                            }}
+                            style={menuItemStyle}
+                        >
+                            <span>🍽</span>
+                            <span>Calorie Tracker</span>
+                        </div>
+
                         {/* Logout */}
                         <div
                             onClick={() => {
