@@ -1,178 +1,190 @@
-import { useState, useEffect } from "react"
-import Modal from "./Modal"
+import { useState } from "react"
 
 export default function CreateChallengeModal({
-    isOpen,
-    onClose,
-    onCreate
+  isOpen,
+  onClose,
+  onCreate
 }) {
+  const [step, setStep] = useState(1)
 
-    const [name, setName] = useState("")
-    const [duration, setDuration] = useState("")
-    const [taskCount, setTaskCount] = useState("")
-    const [tasks, setTasks] = useState([])
+  // Step 1 fields
+  const [name, setName] = useState("")
+  const [duration, setDuration] = useState("")
+  const [taskCount, setTaskCount] = useState("")
 
-    /* ---------------- RESET WHEN OPEN ---------------- */
+  // Step 2 fields
+  const [tasks, setTasks] = useState([])
+  const [currentTaskIndex, setCurrentTaskIndex] = useState(0)
 
-    useEffect(() => {
-        if (isOpen) {
-            setName("")
-            setDuration("")
-            setTaskCount("")
-            setTasks([])
-        }
-    }, [isOpen])
+  const [taskName, setTaskName] = useState("")
+  const [unit, setUnit] = useState("")
+  const [target, setTarget] = useState("")
 
-    /* ---------------- HANDLE TASK COUNT ---------------- */
+  if (!isOpen) return null
 
-    const handleTaskCountChange = (count) => {
-        const newCount = Number(count)
-        setTaskCount(newCount)
-        setTasks(Array(newCount).fill(""))
+  const canGoNext =
+    name.trim() &&
+    duration > 0 &&
+    taskCount > 0
+
+  const canSaveTask =
+    taskName.trim() &&
+    unit.trim() &&
+    target > 0
+
+  const handleNext = () => {
+    setTasks(Array(Number(taskCount)).fill(null))
+    setStep(2)
+  }
+
+  const saveTask = () => {
+    const updated = [...tasks]
+    updated[currentTaskIndex] = {
+      name: taskName,
+      unit,
+      target: Number(target)
     }
 
-    /* ---------------- HANDLE TASK CHANGE ---------------- */
+    setTasks(updated)
 
-    const handleTaskChange = (index, value) => {
-        const updated = [...tasks]
-        updated[index] = value
-        setTasks(updated)
+    // Reset inputs
+    setTaskName("")
+    setUnit("")
+    setTarget("")
+
+    if (currentTaskIndex + 1 < taskCount) {
+      setCurrentTaskIndex(currentTaskIndex + 1)
+    } else {
+      // All tasks added
+      onCreate({
+        name,
+        duration: Number(duration),
+        tasks: updated
+      })
+
+      onClose()
     }
+  }
 
-    /* ---------------- VALIDATION ---------------- */
+  return (
+    <div style={modalStyle.overlay}>
+      <div style={modalStyle.card}>
 
-    const isFormValid =
-        name.trim() !== "" &&
-        duration > 0 &&
-        taskCount > 0 &&
-        tasks.length === Number(taskCount) &&
-        tasks.every(task => task.trim() !== "")
+        {step === 1 && (
+          <>
+            <h2>Create New Challenge</h2>
 
-    /* ---------------- SUBMIT ---------------- */
+            <input
+              placeholder="Challenge Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              style={modalStyle.input}
+            />
 
-    const handleSubmit = () => {
-        if (!isFormValid) return
+            <input
+              placeholder="Duration (days)"
+              type="number"
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              style={modalStyle.input}
+            />
 
-        onCreate({
-            name: name.trim(),
-            duration: Number(duration),
-            tasks: tasks.map(t => t.trim())
-        })
+            <input
+              placeholder="Number of Tasks"
+              type="number"
+              value={taskCount}
+              onChange={(e) => setTaskCount(e.target.value)}
+              style={modalStyle.input}
+            />
 
-        onClose()
-    }
+            <div style={modalStyle.actions}>
+              <button onClick={onClose}>Cancel</button>
 
-    return (
-        <Modal isOpen={isOpen} onClose={onClose}>
+              <button
+                disabled={!canGoNext}
+                onClick={handleNext}
+              >
+                Next →
+              </button>
+            </div>
+          </>
+        )}
 
-            <h2 style={{ marginBottom: "20px" }}>
-                Create New Challenge
+        {step === 2 && (
+          <>
+            <h2>
+              Task {currentTaskIndex + 1} of {taskCount}
             </h2>
 
-            {/* Challenge Name */}
-            <div style={inputGroup}>
-                <label>Challenge Name</label>
-                <input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    style={inputStyle}
-                />
+            <input
+              placeholder="Task Name"
+              value={taskName}
+              onChange={(e) => setTaskName(e.target.value)}
+              style={modalStyle.input}
+            />
+
+            <input
+              placeholder="Measurement Unit (minutes, reps, liters)"
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              style={modalStyle.input}
+            />
+
+            <input
+              placeholder="Target Number"
+              type="number"
+              value={target}
+              onChange={(e) => setTarget(e.target.value)}
+              style={modalStyle.input}
+            />
+
+            <div style={modalStyle.actions}>
+              <button onClick={onClose}>Cancel</button>
+
+              <button
+                disabled={!canSaveTask}
+                onClick={saveTask}
+              >
+                {currentTaskIndex + 1 === Number(taskCount)
+                  ? "Create Challenge"
+                  : "Next Task →"}
+              </button>
             </div>
+          </>
+        )}
 
-            {/* Duration */}
-            <div style={inputGroup}>
-                <label>Duration (days)</label>
-                <input
-                    type="number"
-                    value={duration}
-                    onChange={(e) => setDuration(e.target.value)}
-                    style={inputStyle}
-                />
-            </div>
-
-            {/* Task Count */}
-            <div style={inputGroup}>
-                <label>How many tasks?</label>
-                <select
-                    value={taskCount}
-                    onChange={(e) => handleTaskCountChange(e.target.value)}
-                    style={inputStyle}
-                >
-                    <option value="">Select</option>
-                    {Array.from({ length: 100 }, (_, i) => (
-                        <option key={i} value={i + 1}>
-                            {i + 1}
-                        </option>
-                    ))}
-                </select>
-            </div>
-
-            {/* Dynamic Task Inputs */}
-            {tasks.length > 0 && (
-                <div style={{
-                    maxHeight: "250px",
-                    overflowY: "auto"
-                }}>
-                    {tasks.map((task, index) => (
-                        <div key={index} style={inputGroup}>
-                            <label>Task {index + 1}</label>
-                            <input
-                                value={task}
-                                onChange={(e) =>
-                                    handleTaskChange(index, e.target.value)
-                                }
-                                style={inputStyle}
-                            />
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {/* Buttons */}
-            <div style={{
-                marginTop: "25px",
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: "12px"
-            }}>
-                <button onClick={onClose}>
-                    Cancel
-                </button>
-
-                <button
-                    onClick={handleSubmit}
-                    disabled={!isFormValid}
-                    style={{
-                        background: isFormValid ? "#2563eb" : "#374151",
-                        color: "white",
-                        padding: "10px 16px",
-                        borderRadius: "8px",
-                        fontWeight: "600",
-                        cursor: isFormValid ? "pointer" : "not-allowed",
-                        opacity: isFormValid ? 1 : 0.6
-                    }}
-                >
-                    Create
-                </button>
-            </div>
-
-        </Modal>
-    )
+      </div>
+    </div>
+  )
 }
 
-/* ---------------- STYLES ---------------- */
-
-const inputGroup = {
-    marginBottom: "15px",
+const modalStyle = {
+  overlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,0.7)",
     display: "flex",
-    flexDirection: "column",
-    gap: "6px"
-}
-
-const inputStyle = {
-    padding: "10px",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  card: {
+    background: "#111827",
+    padding: "30px",
+    borderRadius: "12px",
+    width: "400px"
+  },
+  input: {
+    width: "100%",
+    padding: "12px",
+    marginTop: "15px",
     borderRadius: "8px",
-    border: "1px solid #333",
+    border: "none",
     background: "#1f2937",
     color: "white"
+  },
+  actions: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginTop: "25px"
+  }
 }

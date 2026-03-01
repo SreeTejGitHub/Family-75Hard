@@ -496,13 +496,18 @@ export default function AppUI({
                 {(activeChallenge.tasks || []).map((task, i) => (
                     <div
                         key={i}
-                        onClick={() => toggleTask(i)}
                         style={{
                             ...styles.task,
                             backgroundColor: tasks[i] ? "#16a34a" : "#1f2937"
                         }}
                     >
-                        {task}
+                        <div style={{ fontWeight: "600" }}>
+                            {task.name}
+                        </div>
+
+                        <div style={{ fontSize: "13px", opacity: 0.6 }}>
+                            Target: {task.target} {task.unit}
+                        </div>
                     </div>
                 ))}
 
