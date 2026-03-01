@@ -8,6 +8,8 @@ import Header from "./components/Header"
 import ProfileScreen from "./screens/ProfileScreen"
 import ChallengeListScreen from "./screens/ChallengeListScreen"
 import ChallengeDetailScreen from "./screens/ChallengeDetailScreen"
+import WeeklyTrackerScreen from "./screens/WeeklyTrackerScreen"
+import HealthDashboardScreen from "./screens/HealthDashboardScreen"
 
 export default function AppUI({
     user,
@@ -64,7 +66,31 @@ export default function AppUI({
             />
         )
     }
-    
+
+    // weekly Stats
+    if (view === "weekly") {
+        return (
+            <WeeklyTrackerScreen
+                user={user}
+                logout={logout}
+                setView={setView}
+                setActiveChallengeId={setActiveChallengeId}
+            />
+        )
+    }
+
+    //Health Dashboard
+    if (view === "health") {
+        return (
+            <HealthDashboardScreen
+                user={user}
+                logout={logout}
+                setView={setView}
+                setActiveChallengeId={setActiveChallengeId}
+            />
+        )
+    }
+
     // Challenge Screen
     if (!activeChallengeId || !activeChallenge) {
         return (

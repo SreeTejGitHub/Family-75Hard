@@ -81,6 +81,29 @@ export default function Header({
                             <span>Challenges</span>
                         </div>
 
+                        {/* week Stats */}
+                        <div
+                            onClick={() => {
+                                setView("weekly")
+                                setMenuOpen(false)
+                            }}
+                            style={menuItemStyle}
+                        >
+                            <span>📊</span>
+                            <span>Weekly Tracker</span>
+                        </div>
+
+                        <div
+                            onClick={() => {
+                                setView("health")
+                                setMenuOpen(false)
+                            }}
+                            style={menuItemStyle}
+                        >
+                            <span>🩺</span>
+                            <span>Health Dashboard</span>
+                        </div>
+
                         {/* Logout */}
                         <div
                             onClick={() => {
