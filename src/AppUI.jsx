@@ -50,7 +50,7 @@ export default function AppUI({
                 }}>
 
                     <img
-                        src="/logo.png"
+                        src="../assets/logo.png"
                         alt="My Challenge Tracker"
                         style={{
                             width: "300px",
@@ -91,7 +91,7 @@ export default function AppUI({
     const Header = () => (
         <div style={styles.headerRow}>
             <img
-                src="/logo.png"
+                src="../assets/logo.png"
                 alt="logo"
                 style={{
                     width: "100px",
@@ -479,7 +479,7 @@ export default function AppUI({
                                 >
                                     {isCompleted && (
                                         <img
-                                            src="/icon.png"
+                                            src="../assets/icon.png"
                                             alt="completed"
                                             style={{
                                                 width: "70%",
