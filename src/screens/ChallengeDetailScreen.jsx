@@ -229,7 +229,7 @@ export default function ChallengeDetailScreen({
                             {Math.round(
                                 ((taskProgress[progressModal] || 0) /
                                     activeChallenge.tasks[progressModal].target) *
-                                    100
+                                100
                             )}
                             %
                         </div>

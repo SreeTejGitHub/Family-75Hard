@@ -47,11 +47,12 @@ export default function AppUI({
         return () => document.removeEventListener("mousedown", handler)
     }, [])
 
+    //Login Screen
     if (!user) {
         return <LoginScreen loginWithGoogle={loginWithGoogle} />
     }
 
-
+    //Profile Screen
     if (view === "profile") {
         return (
             <ProfileScreen
@@ -63,7 +64,7 @@ export default function AppUI({
             />
         )
     }
-
+    // Challenge Screen
     if (!activeChallengeId || !activeChallenge) {
         return (
             <ChallengeListScreen
@@ -79,6 +80,7 @@ export default function AppUI({
         )
     }
 
+    // Challenge Detail Screen
     return (
         <ChallengeDetailScreen
             user={user}
