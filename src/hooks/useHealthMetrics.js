@@ -7,19 +7,24 @@ export default function useHealthMetrics(user) {
     const [health, setHealth] = useState(null)
     const [weight, setWeight] = useState(null)
     const [weightHistory, setWeightHistory] = useState([])
-
+    const [latestMetrics, setLatestMetrics] = useState(null)
+    const [metricsHistory, setMetricsHistory] = useState([])
     useEffect(() => {
         if (!user) return
 
         const fetchData = async () => {
 
+            // -----------------------------
             // Get health profile
+            // -----------------------------
             const profileSnap = await getDoc(doc(db, "users", user.uid))
             if (profileSnap.exists()) {
                 setHealth(profileSnap.data())
             }
 
-            // Get weight history
+            // -----------------------------
+            // Get weekly metrics
+            // -----------------------------
             const q = query(
                 collection(db, "users", user.uid, "weeklyMetrics"),
                 orderBy("createdAt", "asc")
@@ -28,15 +33,39 @@ export default function useHealthMetrics(user) {
             const snapshot = await getDocs(q)
 
             const weightData = []
-            snapshot.forEach(doc => {
+            const metricsData = []
+
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data()
+
+                const formatted = {
+                    id: docSnap.id,
+                    date: data.createdAt?.toDate().toLocaleDateString(),
+                    weight: data.weight,
+                    waist: data.waist,
+                    neck: data.neck,
+                    chest: data.chest,
+                    arms: data.arms,
+                    hips: data.hips
+                }
+
                 weightData.push({
-                    date: doc.data().createdAt?.toDate().toLocaleDateString(),
-                    weight: doc.data().weight
+                    date: formatted.date,
+                    weight: formatted.weight
                 })
+
+                metricsData.push(formatted)
             })
 
+            setMetricsHistory(metricsData)
+
             setWeightHistory(weightData)
-            setWeight(weightData[weightData.length - 1]?.weight)
+
+            if (metricsData.length > 0) {
+                const latest = metricsData[metricsData.length - 1]
+                setLatestMetrics(latest)
+                setWeight(latest.weight)
+            }
         }
 
         fetchData()
@@ -58,7 +87,7 @@ export default function useHealthMetrics(user) {
     // BMI
     // -----------------------------
 
-    const bmi = ((weight / (heightInches * heightInches)) * 703)
+    const bmi = (weight / (heightInches * heightInches)) * 703
 
     let bmiCategory = ""
     let bmiColor = "#22c55e"
@@ -81,7 +110,7 @@ export default function useHealthMetrics(user) {
     }
 
     // -----------------------------
-    // BMR
+    // BMR (Mifflin St Jeor)
     // -----------------------------
 
     let bmr = 0
@@ -129,12 +158,31 @@ export default function useHealthMetrics(user) {
     const carbs = (calorieTarget - (protein * 4 + fat * 9)) / 4
 
     // -----------------------------
+    // BODY FAT (US Navy – Male)
+    // -----------------------------
+
+    let bodyFat = null
+
+    if (
+        latestMetrics?.waist &&
+        latestMetrics?.neck &&
+        heightInches &&
+        health.gender === "male"
+    ) {
+        bodyFat = (
+            86.010 * Math.log10(latestMetrics.waist - latestMetrics.neck) -
+            70.041 * Math.log10(heightInches) +
+            36.76
+        ).toFixed(1)
+    }
+
+    // -----------------------------
     // PROJECTIONS
     // -----------------------------
 
     const weeklyChange =
         health.goal === "fat_loss" ? -1 :
-        health.goal === "muscle_gain" ? 0.6 : 0
+            health.goal === "muscle_gain" ? 0.6 : 0
 
     const projectedWeight = weight + (weeklyChange * 12)
 
@@ -142,6 +190,8 @@ export default function useHealthMetrics(user) {
         health,
         weight,
         weightHistory,
+        metricsHistory,
+        latestMetrics,
         bmi: bmi.toFixed(1),
         bmiCategory,
         bmiColor,
@@ -152,6 +202,7 @@ export default function useHealthMetrics(user) {
         protein,
         fat,
         carbs,
+        bodyFat,
         projectedWeight
     }
 }

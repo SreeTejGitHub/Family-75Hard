@@ -3,6 +3,7 @@ import styles from "../styles"
 import Header from "../components/Header"
 import { collection, addDoc, serverTimestamp } from "firebase/firestore"
 import { db } from "../firebase"
+import useHealthMetrics from "../hooks/useHealthMetrics"
 
 export default function WeeklyTrackerScreen({
     user,
@@ -13,8 +14,10 @@ export default function WeeklyTrackerScreen({
 
     const [entries, setEntries] = useState([])
     const [toast, setToast] = useState(null)
+    const { metricsHistory } = useHealthMetrics(user)
     const [form, setForm] = useState({
         weight: "",
+        neck: "",
         chest: "",
         arms: "",
         waist: "",
@@ -36,6 +39,7 @@ export default function WeeklyTrackerScreen({
                 collection(db, "users", user.uid, "weeklyMetrics"),
                 {
                     weight: Number(form.weight),
+                    neck: Number(form.neck),
                     chest: Number(form.chest),
                     arms: Number(form.arms),
                     waist: Number(form.waist),
@@ -100,6 +104,15 @@ export default function WeeklyTrackerScreen({
                     {/* 🔹 UPPER BODY */}
                     <div style={sectionStyle}>
                         <h3 style={sectionTitle}>💪 Upper Body</h3>
+                        <input
+                            type="number"
+                            placeholder="Neck (inches)"
+                            value={form.neck}
+                            onChange={(e) =>
+                                setForm({ ...form, neck: e.target.value })
+                            }
+                            style={inputStyle}
+                        />
 
                         <input
                             type="number"
@@ -156,6 +169,38 @@ export default function WeeklyTrackerScreen({
                         Save Weekly Entry
                     </button>
 
+                </div>
+
+                <h2 style={{ marginTop: "40px" }}>📜 Full Progress History</h2>
+
+                <div style={{ marginTop: "20px", overflowX: "auto" }}>
+                    <table style={tableStyle}>
+                        <thead>
+                            <tr>
+                                <th style={thStyle}>Date</th>
+                                <th style={thStyle}>Weight</th>
+                                <th style={thStyle}>Waist</th>
+                                <th style={thStyle}>Neck</th>
+                                <th style={thStyle}>Chest</th>
+                                <th style={thStyle}>Arms</th>
+                                <th style={thStyle}>Hips</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {metricsHistory?.map(entry => (
+                                <tr key={entry.id}>
+                                    <td style={tdStyle}>{entry.date}</td>
+                                    <td style={tdStyle}>{entry.weight || "-"}</td>
+                                    <td style={tdStyle}>{entry.waist || "-"}</td>
+                                    <td style={tdStyle}>{entry.neck || "-"}</td>
+                                    <td style={tdStyle}>{entry.chest || "-"}</td>
+                                    <td style={tdStyle}>{entry.arms || "-"}</td>
+                                    <td style={tdStyle}>{entry.hips || "-"}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
 
                 {/* History Section */}
@@ -240,4 +285,23 @@ const inputStyle = {
     border: "none",
     background: "#111827",
     color: "white"
+}
+
+const thStyle = {
+    padding: "12px",
+    background: "#1f2937",
+    textAlign: "left",
+    fontWeight: "600"
+}
+
+const tdStyle = {
+    padding: "12px",
+    borderBottom: "1px solid #1f2937"
+}
+const tableStyle = {
+  width: "100%",
+  borderCollapse: "collapse",
+  background: "linear-gradient(135deg, #1e293b, #0f172a)",
+  borderRadius: "12px",
+  overflow: "hidden"
 }

@@ -13,18 +13,19 @@ export default function HealthDashboardScreen({
     const {
         health,
         weight,
-        weightHistory,
         bmi,
         bmiCategory,
         bmiColor,
         bmr,
         tdee,
         calorieTarget,
-        exerciseDeficit,
         protein,
         fat,
         carbs,
-        projectedWeight
+        bodyFat,
+        weightHistory,
+        projectedWeight,
+        exerciseDeficit
     } = useHealthMetrics(user)
 
     if (!health || !weight) {
@@ -63,7 +64,14 @@ export default function HealthDashboardScreen({
                     <Card title="🔥 BMR" value={`${bmr.toFixed(0)} kcal`} />
                     <Card title="⚡ TDEE" value={`${tdee.toFixed(0)} kcal`} />
                     <Card title="🎯 Daily Target" value={`${calorieTarget.toFixed(0)} kcal`} />
-
+                    <Card
+                        title="🧬 Body Fat %"
+                        value={
+                            bodyFat
+                                ? `${bodyFat}%`
+                                : "Add neck & waist measurements"
+                        }
+                    />
                 </div>
 
                 {/* -----------------------------
@@ -80,9 +88,8 @@ export default function HealthDashboardScreen({
 
                     <div style={cardStyle}>
                         <h3 style={{ marginBottom: "15px" }}>📆 12-Week Projection</h3>
-                        <div>Projected Weight: {projectedWeight.toFixed(1)} lbs</div>
+                        Projected Weight: {projectedWeight ? projectedWeight.toFixed(1) : "--"} lbs
                     </div>
-
                 </div>
 
                 {/* -----------------------------
