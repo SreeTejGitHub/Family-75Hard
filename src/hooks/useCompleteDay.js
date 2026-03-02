@@ -1,14 +1,13 @@
 import { doc, updateDoc, arrayUnion } from "firebase/firestore"
 import { db } from "../firebase"
 
-export default function useCompleteDay(user, activeChallenge) {
+export default function useCompleteDay(user, activeChallenge, taskProgress = []) {
 
   const completeDay = async () => {
 
     if (!user || !activeChallenge) return
 
     const {
-      tasks = [],
       progress = {},
       duration = 0,
       id
@@ -20,14 +19,22 @@ export default function useCompleteDay(user, activeChallenge) {
       perfectDays = []
     } = progress
 
-    if (!Array.isArray(tasks)) return
     if (day > duration) return
 
-    const isPerfect = (activeChallenge.taskProgress || []).every(p => p.completed)
-    
-    const updatedCompleted = completedDays.includes(day)
-      ? completedDays
-      : [...completedDays, day]
+    // ✅ Check real progress
+    if (!Array.isArray(taskProgress)) return
+    const hasAnyProgress = taskProgress.some(val => val > 0)
+
+    const isPerfect =
+      taskProgress.length > 0 &&
+      activeChallenge.tasks.every((task, i) =>
+        (taskProgress[i] || 0) >= task.target
+      )
+
+    const updatedCompleted =
+      hasAnyProgress && !completedDays.includes(day)
+        ? [...completedDays, day]
+        : completedDays
 
     const updatedPerfect =
       isPerfect && !perfectDays.includes(day)

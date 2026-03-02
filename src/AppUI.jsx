@@ -53,7 +53,7 @@ export default function AppUI({
 
         const { calorieTarget } = useHealthMetrics(user)
 
-        
+
     //Login Screen
     if (!user) {
         return <LoginScreen loginWithGoogle={loginWithGoogle} />

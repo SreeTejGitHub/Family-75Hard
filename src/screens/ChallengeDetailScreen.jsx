@@ -13,6 +13,7 @@ export default function ChallengeDetailScreen({
     activeChallenge,
     day,
     completedDays = [],
+    perfectDays = [],
     longestStreak,
     completionPercent,
     currentStreak,
@@ -74,8 +75,26 @@ export default function ChallengeDetailScreen({
                 <div style={styles.grid}>
                     {Array.from({ length: activeChallenge.duration }, (_, i) => {
                         const d = i + 1
+
                         const isCompleted = completedDays.includes(d)
+                        const isPerfect = perfectDays.includes(d)
                         const isCurrent = d === day
+
+                        const backgroundColor =
+                            isPerfect
+                                ? "#16a34a"     // Green
+                                : isCompleted
+                                    ? "#f59e0b"     // Orange
+                                    : isCurrent
+                                        ? "#3b82f6"     // Blue
+                                        : "#1f2937"     // Dark
+
+                        const textColor =
+                            isPerfect || isCurrent
+                                ? "#ffffff"
+                                : isCompleted
+                                    ? "#111827"
+                                    : "#94a3b8"
 
                         return (
                             <div
@@ -85,40 +104,18 @@ export default function ChallengeDetailScreen({
                                     display: "flex",
                                     alignItems: "center",
                                     justifyContent: "center",
-                                    position: "relative",
                                     fontWeight: "600",
                                     fontSize: "14px",
-                                    backgroundColor: isCompleted
-                                        ? "#0f172a"
-                                        : isCurrent
-                                            ? "#3b82f6"
-                                            : "#1f2937",
-                                    color: isCompleted
-                                        ? "#22c55e"
-                                        : isCurrent
-                                            ? "#ffffff"
-                                            : "#94a3b8",
-                                    border: isCurrent ? "2px solid #60a5fa" : "none",
+                                    borderRadius: "10px",
+                                    backgroundColor,
+                                    color: textColor,
+                                    boxShadow: isCurrent
+                                        ? "0 0 12px rgba(59,130,246,0.5)"
+                                        : "none",
                                     transition: "0.2s ease"
                                 }}
                             >
-                                {/* Day Number */}
-                                <span style={{ zIndex: 1 }}>{d}</span>
-
-                                {/* Completed Overlay */}
-                                {isCompleted && (
-                                    <img
-                                        src={icon}
-                                        alt="completed"
-                                        style={{
-                                            position: "absolute",
-                                            width: "60%",
-                                            height: "60%",
-                                            objectFit: "contain",
-                                            opacity: 0.15
-                                        }}
-                                    />
-                                )}
+                                {d}
                             </div>
                         )
                     })}

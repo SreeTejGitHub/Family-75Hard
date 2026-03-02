@@ -29,8 +29,8 @@ export default function App() {
   const taskLogic = useTaskProgress(activeChallenge)
 
   // COMPLETE DAY
-  const { completeDay } = useCompleteDay(user, activeChallenge)
-
+  const { completeDay } = useCompleteDay(user, activeChallenge, taskLogic.taskProgress)
+  
   // Loading states
   if (loading) return <div>Loading...</div>
   if (!user)

@@ -2,39 +2,31 @@ import { useState, useEffect } from "react"
 
 export default function useTaskProgress(activeChallenge) {
 
-  const [taskProgress, setTaskProgress] = useState({})
-  const [tasks, setTasks] = useState([])
+  const [taskProgress, setTaskProgress] = useState([])
 
   useEffect(() => {
-    if (!activeChallenge) return
+    if (!activeChallenge?.tasks) {
+      setTaskProgress([])
+      return
+    }
 
-    const initial = {}
-    activeChallenge.tasks.forEach((_, i) => {
-      initial[i] = 0
-    })
-
-    setTaskProgress(initial)
-    setTasks(Array(activeChallenge.tasks.length).fill(false))
+    // Initialize array with 0 for each task
+    setTaskProgress(
+      activeChallenge.tasks.map(() => 0)
+    )
 
   }, [activeChallenge])
 
   const updateTaskProgress = (index, value) => {
-    setTaskProgress(prev => ({
-      ...prev,
-      [index]: value
-    }))
-  }
-
-  const toggleTask = (i) => {
-    const updated = [...tasks]
-    updated[i] = !updated[i]
-    setTasks(updated)
+    setTaskProgress(prev => {
+      const updated = [...prev]
+      updated[index] = value
+      return updated
+    })
   }
 
   return {
     taskProgress,
-    updateTaskProgress,
-    tasks,
-    toggleTask
+    updateTaskProgress
   }
 }
