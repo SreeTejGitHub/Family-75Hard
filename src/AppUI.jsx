@@ -51,12 +51,14 @@ export default function AppUI({
         return () => document.removeEventListener("mousedown", handler)
     }, [])
 
+        const { calorieTarget } = useHealthMetrics(user)
+
+        
     //Login Screen
     if (!user) {
         return <LoginScreen loginWithGoogle={loginWithGoogle} />
     }
 
-    const { calorieTarget } = useHealthMetrics(user)
 
     //Profile Screen
     if (view === "profile") {
