@@ -3,18 +3,28 @@ import { db } from "../firebase"
 
 export default function useCompleteDay(user, activeChallenge) {
 
-  const completeDay = async ({
-    tasks,
-    day,
-    completedDays,
-    perfectDays
-  }) => {
+  const completeDay = async () => {
 
     if (!user || !activeChallenge) return
-    if (day > activeChallenge.duration) return
 
-    const isPerfect = tasks.every(Boolean)
+    const {
+      tasks = [],
+      progress = {},
+      duration = 0,
+      id
+    } = activeChallenge
 
+    const {
+      day = 1,
+      completedDays = [],
+      perfectDays = []
+    } = progress
+
+    if (!Array.isArray(tasks)) return
+    if (day > duration) return
+
+    const isPerfect = (activeChallenge.taskProgress || []).every(p => p.completed)
+    
     const updatedCompleted = completedDays.includes(day)
       ? completedDays
       : [...completedDays, day]
@@ -24,7 +34,7 @@ export default function useCompleteDay(user, activeChallenge) {
         ? [...perfectDays, day]
         : perfectDays
 
-    const isLastDay = day === activeChallenge.duration
+    const isLastDay = day === duration
 
     if (isLastDay) {
 
@@ -35,7 +45,7 @@ export default function useCompleteDay(user, activeChallenge) {
       }
 
       await updateDoc(
-        doc(db, "users", user.uid, "challenges", activeChallenge.id),
+        doc(db, "users", user.uid, "challenges", id),
         {
           history: arrayUnion(historyEntry),
           totalCompletions:
@@ -52,7 +62,7 @@ export default function useCompleteDay(user, activeChallenge) {
     } else {
 
       await updateDoc(
-        doc(db, "users", user.uid, "challenges", activeChallenge.id),
+        doc(db, "users", user.uid, "challenges", id),
         {
           progress: {
             day: day + 1,

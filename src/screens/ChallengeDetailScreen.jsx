@@ -85,21 +85,37 @@ export default function ChallengeDetailScreen({
                                     display: "flex",
                                     alignItems: "center",
                                     justifyContent: "center",
-                                    backgroundColor: !isCompleted
-                                        ? isCurrent
+                                    position: "relative",
+                                    fontWeight: "600",
+                                    fontSize: "14px",
+                                    backgroundColor: isCompleted
+                                        ? "#0f172a"
+                                        : isCurrent
                                             ? "#3b82f6"
-                                            : "#1f2937"
-                                        : "#0f172a"
+                                            : "#1f2937",
+                                    color: isCompleted
+                                        ? "#22c55e"
+                                        : isCurrent
+                                            ? "#ffffff"
+                                            : "#94a3b8",
+                                    border: isCurrent ? "2px solid #60a5fa" : "none",
+                                    transition: "0.2s ease"
                                 }}
                             >
+                                {/* Day Number */}
+                                <span style={{ zIndex: 1 }}>{d}</span>
+
+                                {/* Completed Overlay */}
                                 {isCompleted && (
                                     <img
                                         src={icon}
                                         alt="completed"
                                         style={{
-                                            width: "70%",
-                                            height: "70%",
-                                            objectFit: "contain"
+                                            position: "absolute",
+                                            width: "60%",
+                                            height: "60%",
+                                            objectFit: "contain",
+                                            opacity: 0.15
                                         }}
                                     />
                                 )}
@@ -107,7 +123,6 @@ export default function ChallengeDetailScreen({
                         )
                     })}
                 </div>
-
                 {/* Tasks */}
                 {(activeChallenge.tasks || []).map((task, i) => {
                     const current = taskProgress[i] || 0
