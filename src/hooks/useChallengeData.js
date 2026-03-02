@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { collection, onSnapshot } from "firebase/firestore"
+import { collection, onSnapshot, addDoc } from "firebase/firestore"
 import { db } from "../firebase"
 
 export default function useChallengeData(user) {
@@ -28,5 +28,28 @@ export default function useChallengeData(user) {
     return unsub
   }, [user])
 
-  return { challenges, loading }
+  // ✅ CREATE CHALLENGE FUNCTION
+  const createChallenge = async (challengeData) => {
+    if (!user) return
+
+    await addDoc(
+      collection(db, "users", user.uid, "challenges"),
+      {
+        ...challengeData,
+        createdAt: new Date(),
+        progress: {
+          completedDays: [],
+          longestStreak: 0
+        },
+        history: [],
+        totalCompletions: 0
+      }
+    )
+  }
+
+  return {
+    challenges,
+    createChallenge,   // ✅ NOW EXPORTED
+    loading
+  }
 }

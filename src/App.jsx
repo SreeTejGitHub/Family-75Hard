@@ -13,7 +13,7 @@ export default function App() {
   const { user, loading, loginWithGoogle, logout } = useAuth()
 
   // CHALLENGE DATA
-  const { challenges, loading: dataLoading } = useChallengeData(user)
+  const { challenges, createChallenge, loading: dataLoading } = useChallengeData(user)
 
   // ACTIVE CHALLENGE
   const {
@@ -42,6 +42,7 @@ export default function App() {
       user={user}
       logout={logout}
       challenges={challenges}
+      createChallenge={createChallenge}
       activeChallenge={activeChallenge}
       activeChallengeId={activeChallengeId}
       setActiveChallengeId={setActiveChallengeId}
